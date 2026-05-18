@@ -1,0 +1,13 @@
+matplotlib
+numpy
+pandas
+plotly
+pulp
+python-dotenv
+scikit-learn
+scipy
+snowflake-connector-python
+snowflake-snowpark-python
+streamlit
+reportlab
+pypdf
