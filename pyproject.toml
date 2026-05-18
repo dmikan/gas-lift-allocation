@@ -4,12 +4,7 @@ requires-python = "~=3.11.0"
 version = "0.0.1"
 description = ""
 dependencies = [
-    "streamlit"
-]
-
-[tool.snowflake]
-# Obligamos al motor a jalar todas estas librerías desde el entorno seguro local de Snowflake
-dependencies = [
+    "streamlit",
     "numpy",
     "pandas",
     "plotly",
