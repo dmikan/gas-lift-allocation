@@ -4,7 +4,13 @@ requires-python = "~=3.11.0"
 version = "0.0.1"
 description = ""
 dependencies = [
-    "streamlit",
+    "streamlit"
+]
+
+[tool.snowflake]
+# Aquí le decimos explícitamente a Snowflake que use su canal interno de Anaconda
+# para cargar estos paquetes sin intentar salir a internet.
+dependencies = [
     "numpy",
     "pandas",
     "plotly",
