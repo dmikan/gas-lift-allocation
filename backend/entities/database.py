@@ -1,7 +1,12 @@
 import snowflake.connector
 from typing import Dict, Any, List, Optional
 import os
-from dotenv import load_dotenv
+# Import with dotenv---
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ModuleNotFoundError:
+    pass
 # Import snowpark to detect if we are inside Snowflake
 try:
     from snowflake.snowpark.context import get_active_session
@@ -10,8 +15,6 @@ except ImportError:
     def get_active_session(): return None
 
 #HACK: For now we're repeating code for every connection. However, a better approach would be to have a single connection manager that can handle multiple connections (e.g., for different databases or environments) in a more elegant way. This is something we can refactor in the future. 
-
-load_dotenv()
 
 class SnowflakeDB:
     """Handles direct Snowflake connection and operations (Hybrid: Local & Streamlit in Snowflake)"""
