@@ -1,13 +1,15 @@
-# Streamlit in Snowflake apps run with a pre-installed version of the Streamlit library.
-# To use a different version of the Streamlit library, you must add an External Access Integration to allow package downloads from PyPI or from another repository.
-
 [project]
 name = "streamlit-app"
 requires-python = "~=3.11.0"
 version = "0.0.1"
 description = ""
 dependencies = [
-    "streamlit[snowflake]",
+    "streamlit"
+]
+
+[tool.snowflake]
+# Obligamos al motor a jalar todas estas librerías desde el entorno seguro local de Snowflake
+dependencies = [
     "numpy",
     "pandas",
     "plotly",
@@ -20,5 +22,4 @@ dependencies = [
 ]
 
 [tool.uv]
-# earlier versions of numba require a python version < 3.11
 constraint-dependencies = ["numba>=0.56.0"]
