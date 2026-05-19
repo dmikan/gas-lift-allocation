@@ -23,7 +23,7 @@ class ProductionTestRepository:
             q_gas, 
             q_water,
             q_liquid, 
-            whp, 
+            whp 
         FROM prod.analytics_d_production.production__tests
         WHERE name IN ({wells_names_str});
         """
@@ -50,7 +50,7 @@ class ProductionTestRepository:
                 q_gas,
                 q_water,
                 q_liquid,
-                whp
+                whp,
                 ROW_NUMBER() OVER (
                     PARTITION BY wellbore_ci_name 
                     ORDER BY test_date DESC

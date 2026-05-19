@@ -115,6 +115,9 @@ class SnowflakeDB:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
+            if not self.is_snowflake_cloud and isinstance(query, str):
+                query = query.replace("?", "%s")
+            
             cursor.execute(query, params or ())
             
             if cursor.description:
