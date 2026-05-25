@@ -1,54 +1,36 @@
 from backend.entities.well_optimization import WellOptimization
-from backend.entities.database import SnowflakeDB
+from backend.entities.field_optimization import FieldOptimization
+from sqlmodel import Session, select
 from typing import List
 
 class WellOptimizationRepository:
-    def __init__(self, db: SnowflakeDB):
-        self.db = db
+    def __init__(self, session: Session):
+        self.session = session
 
     def save(self, result: WellOptimization) -> bool:
-        """Save a WellOptimization entity"""
-        query = """
-        INSERT INTO well_optimizations (
-            field_optimization_id, well_number, well_name,
-            optimal_production, optimal_gas_injection
-        ) VALUES (?, ?, ?, ?, ?)
-        """
+        """Save a WellOptimization entity to SQLModel database"""
         try:
-            params = (
-                    result.optimization_id,
-                    result.well_number,
-                    result.well_name,
-                    result.optimal_production,
-                    result.optimal_gas_injection
-                )
-            self.db.execute_query(query, params)
+            self.session.add(result)
+            self.session.commit()
             return True
         except Exception as e:
+            self.session.rollback()
             raise e
 
     def find_by_optimization_id(self, opt_id: int) -> List[WellOptimization]:
-        query = """
-            SELECT * FROM well_optimizations 
-            WHERE field_optimization_id = ?
-            """
-        results = self.db.execute_query(query, (opt_id,))
-        return [WellOptimization.from_dict(row) for row in results]
-
+        """Find WellOptimizations by field optimization ID"""
+        statement = select(WellOptimization).where(WellOptimization.field_optimization_id == opt_id)
+        return list(self.session.exec(statement).all())
 
     def find_latest(self, limit: int = None) -> List[WellOptimization]:
-        query = """
-            SELECT w.*, o.execution_date 
-            FROM well_optimizations w
-            JOIN (
-            SELECT id, execution_date
-            FROM field_optimizations o
-            ORDER BY execution_date DESC
-            LIMIT 1
-            ) AS o
-            ON w.field_optimization_id = o.id                           
-            """
+        """Find WellOptimizations belonging to the latest FieldOptimization"""
+        latest_opt_statement = select(FieldOptimization.id).order_by(FieldOptimization.execution_date.desc()).limit(1)
+        latest_opt_id = self.session.exec(latest_opt_statement).first()
+        
+        if not latest_opt_id:
+            return []
+            
+        statement = select(WellOptimization).where(WellOptimization.field_optimization_id == latest_opt_id)
         if limit:
-            query += f" LIMIT {limit}"
-        results: list[dict] = self.db.execute_query(query)
-        return [WellOptimization.from_dict(row) for row in results]
+            statement = statement.limit(limit)
+        return list(self.session.exec(statement).all())

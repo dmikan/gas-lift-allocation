@@ -1,5 +1,5 @@
 from backend.repositories.production_test_repository import ProductionTestRepository
-from backend.entities.database import SnowflakeDB
+from backend.database import SnowflakeDB
 from backend.entities.well import Well
 from backend.repositories.well_repository import WellRepository
 

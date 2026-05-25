@@ -1,5 +1,5 @@
 from backend.repositories.production_test_repository import ProductionTestRepository
-from backend.entities.database import SnowflakeDB
+from backend.database import SnowflakeDB
 from backend.entities.production_test import ProductionTest
 from app.utils.state_keys import StateKeys #HACK: to be replaced with POST request from API.
 from backend.services.data_loader_service import DataLoader

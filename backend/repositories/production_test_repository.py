@@ -1,5 +1,5 @@
 from backend.entities.production_test import ProductionTest
-from backend.entities.database import SnowflakeDB
+from backend.database import SnowflakeDB
 
 
 class ProductionTestRepository:

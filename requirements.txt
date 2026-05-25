@@ -11,3 +11,7 @@ snowflake-snowpark-python
 streamlit
 reportlab
 pypdf
+sqlmodel
+fastapi
+uvicorn
+httpx

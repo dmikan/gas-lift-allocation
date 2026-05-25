@@ -4,7 +4,8 @@ import pandas as pd
 from pathlib import Path
 from app.styles.custom_styles import inject_global_css
 from app.utils.state_keys import StateKeys
-from backend.services.well_service import WellService
+from app.utils.api_client import APIClient
+
 
 
 
@@ -75,8 +76,9 @@ class ManualInputComponent:
             "Define the field name and assign identifiers for each well.",
             f"{self.num_wells} well configured")
             
-            well_service = WellService()
-            wells_list = well_service.get_all_wells()  # Example of fetching data, can be used to populate options in the future
+            api_client = APIClient()
+            wells_list = api_client.get_wells()  # Fetch well list from the API
+
             
             df_actual = st.session_state[StateKeys.SESSION_KEY_INFO_DF]
             column_configuration = {

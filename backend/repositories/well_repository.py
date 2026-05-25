@@ -1,4 +1,4 @@
-from backend.entities.database import SnowflakeDB
+from backend.database import SnowflakeDB
 from backend.entities.well import Well
 
 class WellRepository:

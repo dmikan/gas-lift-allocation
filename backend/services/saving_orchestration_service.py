@@ -1,7 +1,7 @@
 from backend.services.field_optimization_service import FieldOptimizationService
 from backend.services.well_optimization_service import WellOptimizationService
 from backend.entities.field_optimization import FieldOptimization
-from backend.entities.database import SnowflakeDB
+from backend.database import SnowflakeDB
 from backend.repositories.field_optimization_repository import FieldOptimizationRepository
 from backend.repositories.well_optimization_repository import WellOptimizationRepository
 #Orchestration pattern

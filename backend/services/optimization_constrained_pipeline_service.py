@@ -3,7 +3,7 @@ from backend.services.optimization_model_service import OptimizationModel
 from backend.services.saving_orchestration_service import SavingOrchestrationService
 import numpy as np
 from typing import Dict, List, Tuple
-from backend.entities.database import SnowflakeDB
+from backend.database import SnowflakeDB
 
 class OptimizationConstrainedPipelineService:
     """Handles the optimization process using pre-calculated fitting results"""

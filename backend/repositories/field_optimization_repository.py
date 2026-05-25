@@ -1,54 +1,26 @@
 from backend.entities.field_optimization import FieldOptimization
-from backend.entities.database import SnowflakeDB
+from sqlmodel import Session, select
 from typing import Optional, List
-from datetime import datetime
-    
+
 class FieldOptimizationRepository:
-    def __init__(self, db: SnowflakeDB):
-        self.db = db
+    def __init__(self, session: Session):
+        self.session = session
 
     def save(self, opt: FieldOptimization) -> int:
-        id_query = "SELECT field_optimizations_id_seq.NEXTVAL"
-        new_id = self.db.execute_query(id_query)[0]['NEXTVAL'] 
-        query = """
-                INSERT INTO field_optimizations (
-                    id, execution_date, total_production, total_gas_injection, gas_injection_limit,
-                    oil_price, gas_price, field_name
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """
-        params = (
-            new_id,
-            datetime.now(),
-            opt.total_production,
-            opt.total_gas_injection,
-            opt.gas_injection_limit,
-            opt.oil_price,
-            opt.gas_price,
-            opt.field_name
-        )
-        self.db.execute_query(query, params)
-        return new_id
-
-        
+        """Save FieldOptimization to the SQLModel database"""
+        self.session.add(opt)
+        self.session.commit()
+        self.session.refresh(opt)
+        return opt.id
 
     def find_latest(self) -> Optional[FieldOptimization]:
-        query = """
-                SELECT * FROM field_optimizations 
-                ORDER BY execution_date DESC 
-                LIMIT 1
-            """
-        result = self.db.execute_query(query)
-        return FieldOptimization.from_dict(result[0]) if result else None
-
-
+        """Fetch the latest FieldOptimization"""
+        statement = select(FieldOptimization).order_by(FieldOptimization.execution_date.desc()).limit(1)
+        return self.session.exec(statement).first()
 
     def find_all(self, limit: int = None) -> List[FieldOptimization]:
-        query = """
-                SELECT * FROM field_optimizations 
-                ORDER BY execution_date DESC
-            """
+        """Fetch all FieldOptimizations"""
+        statement = select(FieldOptimization).order_by(FieldOptimization.execution_date.desc())
         if limit is not None:
-            query += f" LIMIT {limit}"     
-        results = self.db.execute_query(query)
-        return [FieldOptimization.from_dict(row) for row in results]
+            statement = statement.limit(limit)
+        return list(self.session.exec(statement).all())

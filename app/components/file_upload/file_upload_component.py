@@ -1,7 +1,5 @@
 import streamlit as st
 from pathlib import Path
-import pandas as pd
-from io import StringIO
 import os
 from app.components.file_upload.manual_input_component import ManualInputComponent
 from app.components.file_upload.csv_input_component import CSVInputComponent

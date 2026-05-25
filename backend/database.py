@@ -102,17 +102,27 @@ class SnowflakeDB:
             self.role_raw = self.config_raw["role"]
             
     
-    def _get_connection(self):
-        """Get a new connection to Snowflake (Smart switch)"""
+    def _get_connection(self, env: str = "default"):
+        """Get a new connection to Snowflake based on the target environment (Smart switch)"""
         if self.is_snowflake_cloud and self.session:
             return self.session.connection
-        if self.config:
-            return snowflake.connector.connect(**self.config)
-        raise ValueError("Could not establish connection (neither active session nor local credentials found)")
+
+        configs = {
+            "default": self.config,
+            "prod": self.config_prod,
+            "raw": self.config_raw
+        }
+
+        target_config = configs.get(env)
+        if target_config:
+            return snowflake.connector.connect(**target_config)
+            
+        raise ValueError(f"Could not establish connection: environment '{env}' not configured.")
 
 
-    def execute_query(self, query: str, params: tuple = None):
-        conn = self._get_connection()
+    def execute_query(self, query: str, params: tuple = None, env: str = "default") -> list[Dict[str, Any]]:
+        """Unified query execution helper for all environments"""
+        conn = self._get_connection(env)
         try:
             cursor = conn.cursor()
             if not self.is_snowflake_cloud and isinstance(query, str):
@@ -127,77 +137,44 @@ class SnowflakeDB:
             return []
 
         except Exception as e:
-            print(f"Error executing query: {query} with params {params}")
+            print(f"Error executing query on '{env}' env: {query} with params {params}")
             raise
         finally:
-            # IMPORTANT: If it is a local connection, we close everything.
-            # If it is a Snowflake session, we only close the cursor, not the global connection.
             if hasattr(cursor, 'close'):
                 cursor.close()
             if not self.is_snowflake_cloud and hasattr(conn, 'close'):
                 conn.close()
-
-
-    def _get_connection_prod(self):
-        """Get a new connection to Snowflake prod database (Smart switch)"""
-        if self.is_snowflake_cloud and self.session:
-            return self.session.connection
-        if self.config_prod:
-            return snowflake.connector.connect(**self.config_prod)
-        raise ValueError("Could not establish connection (neither active session nor local credentials found)")
 
 
     def execute_query_prod(self, query: str, params: tuple = None) -> list[Dict[str, Any]]:
-        conn = self._get_connection_prod()
-        try:
-            cursor = conn.cursor()
-            cursor.execute(query, params or ())
-            
-            if cursor.description:
-                columns = [col[0] for col in cursor.description]
-                result = [dict(zip(columns, row)) for row in cursor.fetchall()]
-                return result
-            return []
+        """Wrapper for production database queries"""
+        return self.execute_query(query, params, env="prod")
 
-        except Exception as e:
-            print(f"Error executing query: {query} with params {params}")
-            raise
-        finally:
-            # IMPORTANT: If it is a local connection, we close everything.
-            # If it is a Snowflake session, we only close the cursor, not the global connection.
-            if hasattr(cursor, 'close'):
-                cursor.close()
-            if not self.is_snowflake_cloud and hasattr(conn, 'close'):
-                conn.close()
-
-
-    def _get_connection_raw(self):
-        """Get a new connection to Snowflake raw database (Smart switch)"""
-        if self.is_snowflake_cloud and self.session:
-            return self.session.connection
-        if self.config_raw:
-            return snowflake.connector.connect(**self.config_raw)
-        raise ValueError("Could not establish connection (neither active session nor local credentials found)") 
 
     def execute_query_raw(self, query: str, params: tuple = None) -> list[Dict[str, Any]]:
-        conn = self._get_connection_raw()
-        try:
-            cursor = conn.cursor()
-            cursor.execute(query, params or ())
-            
-            if cursor.description:
-                columns = [col[0] for col in cursor.description]
-                result = [dict(zip(columns, row)) for row in cursor.fetchall()]
-                return result
-            return []
+        """Wrapper for raw database queries"""
+        return self.execute_query(query, params, env="raw")
 
-        except Exception as e:
-            print(f"Error executing query: {query} with params {params}")
-            raise
-        finally:
-            # IMPORTANT: If it is a local connection, we close everything.
-            # If it is a Snowflake session, we only close the cursor, not the global connection.
-            if hasattr(cursor, 'close'):
-                cursor.close()
-            if not self.is_snowflake_cloud and hasattr(conn, 'close'):
-                conn.close()
+
+# --- SQLModel Configuration ---
+from sqlmodel import SQLModel, create_engine, Session
+
+# Set up local SQLite database file in the project root as primary storage for optimizations
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+db_path = os.path.join(project_root, "gas_lift_local.db")
+DATABASE_URL = f"sqlite:///{db_path}"
+
+engine = create_engine(
+    DATABASE_URL,
+    echo=False,
+    connect_args={"check_same_thread": False}  # Needed for SQLite multi-threading in FastAPI
+)
+
+def init_db():
+    """Create all SQLModel tables in the database if they do not exist."""
+    SQLModel.metadata.create_all(engine)
+
+def get_db_session():
+    """Provide a database session context/dependency."""
+    with Session(engine) as session:
+        yield session

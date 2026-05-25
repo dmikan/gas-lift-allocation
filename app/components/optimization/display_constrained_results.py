@@ -1,11 +1,9 @@
 import streamlit as st
 import pandas as pd
-from backend.entities.database import SnowflakeDB
 from app.components.utils.plotter import Plotter
 from app.styles.custom_styles import inject_global_css
-from backend.entities.production_test import ProductionTest
-from backend.entities.well_optimization import WellOptimization
-from backend.services.production_test_service import ProductionTestService
+from app.utils.models import ProductionTest, WellOptimization
+from app.utils.api_client import APIClient
 
 class DisplayConstrainedResults:
     def __init__(self, optimization_results: dict, 
@@ -13,6 +11,7 @@ class DisplayConstrainedResults:
         self.plotter = None
         self.optimization_results: dict = optimization_results
         self.well_results: list[WellOptimization] = well_results
+        self.api_client = APIClient()
         
     '''
     Method to display the optimization results.
@@ -37,11 +36,11 @@ class DisplayConstrainedResults:
         self._plot_well_curves()
 
     def show_detailed_results_by_well(self):
-        #PENDING: The three lines below should be implemented in a controller, not here. This component should only be responsible for displaying the results, not fetching data from the database. 
         self._show_optimization_well_results_table()
-        production_test_service = ProductionTestService()
-        well_tests: list[ProductionTest] = production_test_service.get_last_production_test()
-        self._show_well_test_table(well_tests)
+        well_names = [getattr(result, 'well_name', '') for result in self.well_results if getattr(result, 'well_name', '')]
+        if well_names:
+            well_tests = self.api_client.get_latest_well_tests(well_names)
+            self._show_well_test_table(well_tests)
 
     '''
     Method to display the summary metrics of the optimization.

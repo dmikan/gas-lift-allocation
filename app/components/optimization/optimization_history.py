@@ -1,39 +1,33 @@
 import streamlit as st
 import pandas as pd
-from backend.entities.database import SnowflakeDB
-from backend.services.field_optimization_service import FieldOptimizationService
-from backend.services.well_optimization_service import WellOptimizationService
+from app.utils.api_client import APIClient
 from app.components.optimization.display_constrained_results import DisplayConstrainedResults
-from backend.entities.field_optimization import FieldOptimization
-from backend.repositories.field_optimization_repository import FieldOptimizationRepository
-from backend.repositories.well_optimization_repository import WellOptimizationRepository
-from backend.entities.well_optimization import WellOptimization
-from typing import Optional
-
+from app.utils.models import FieldOptimization, WellOptimization
 
 class OptimizationHistoryComponent:
-    def __init__(self, db: SnowflakeDB):
-        self.db = db
+    def __init__(self, db=None):
+        # Signature compatibility, but using backend REST API exclusively
+        self.api_client = APIClient()
         self.display_constrained_results = None
-        self.field_optimizations = None
-        self.wells_optimizations = None
+        self.field_optimizations = []
+        self.wells_optimizations = []
 
     def show(self):
         st.subheader("History of optimizations")
         try:
-            field_optimization_repository = FieldOptimizationRepository(self.db)
-            field_optimization_service = FieldOptimizationService(field_optimization_repository)
-            self.field_optimizations: list[FieldOptimization] = field_optimization_service.list_field_optimizations()
+            self.field_optimizations = self.api_client.get_optimization_history()
+            if not self.field_optimizations:
+                st.info("No historical optimizations found.")
+                return
             self._show_field_optimizations_table()
             self._show_wells_optimizations_table()
-        finally:
-            print("History of optimizations shown successfully.")
-
+        except Exception as e:
+            st.error(f"❌ Error displaying optimization history: {str(e)}")
 
     def _show_field_optimizations_table(self):
         history_field_optimizations_data: list[dict] = [{
             "ID": opt.id,
-            "Date": opt.execution_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "Date": opt.execution_date.strftime("%Y-%m-%d %H:%M:%S") if hasattr(opt.execution_date, "strftime") else str(opt.execution_date),
             "Field": opt.field_name,
             "Total Production (bbl)": opt.total_production,
             "Total QGL (Mscf)": opt.total_gas_injection,
@@ -56,7 +50,6 @@ class OptimizationHistoryComponent:
             height=300
         )
 
-
     def _show_wells_optimizations_table(self):
         selected_id = st.selectbox(
             "Select an optimization to view details",
@@ -65,11 +58,10 @@ class OptimizationHistoryComponent:
         )
 
         if selected_id:
-            well_optimization_repository = WellOptimizationRepository(self.db)
-            well_optimization_service = WellOptimizationService(well_optimization_repository)
             selected_optimization: FieldOptimization = next((opt for opt in self.field_optimizations if opt.id == selected_id), None)
-            self.wells_optimizations: list[WellOptimization] = well_optimization_service.get_well_optimizations_by_optimization(selected_id)
             
+            # Retrieve well details exclusively from the API
+            self.wells_optimizations = self.api_client.get_well_optimization_details(selected_id)
             
             if selected_optimization:
                 st.subheader(f"Detailed Results for Field {selected_optimization.field_name}")
