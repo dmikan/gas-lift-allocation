@@ -156,3 +156,62 @@ class DisplayConstrainedResults:
             except Exception as e:
                 st.error(f"Error displaying results: {str(e)}")
                 st.write("Data received:", well_tests)
+
+
+
+    def _show_optimization_and_well_tests_table(self, well_tests: list[ProductionTest]):
+        if not well_tests:
+            st.warning("No well test data available to display")
+            return
+        if not self.well_results:
+            st.warning("No well data available to display")
+            return
+        try:
+            well_test_data = [{
+                "Well": getattr(test, 'wellbore_ci_name', 'N/A'),
+                "Test Date": getattr(test, 'test_date', 'N/A'),
+                "Gas lift rate (mscfd)": getattr(test, 'q_gl', 0),
+                "Oil rate (bopd)": getattr(test, 'q_oil', 0), 
+                "Total_fluid_rate (bfpd)": getattr(test, 'q_liquid', 0)
+            } for test in well_tests]
+
+            well_optimisation_results = [{
+                "Well identifier": getattr(result, 'well_name', 'N/A'),
+                "Gas lift rate (mscfd)": getattr(result, 'optimal_gas_injection', 0),
+                "Oil rate (bopd)": getattr(result, 'optimal_production', 0)
+            } for result in self.well_results]
+
+            df_well_tests = pd.DataFrame(well_test_data)
+            df_well_optimisation = pd.DataFrame(well_optimisation_results)
+
+            
+            df_well_tests.columns = pd.MultiIndex.from_tuples([
+                ("Test values", "Well"),
+                ("Test values", "Test Date"),
+                ("Test values", "Gas lift rate (mscfd)"),
+                ("Test values", "Oil rate (bopd)"),
+                ("Test values", "Total fluid rate (bfpd)")
+            ])
+
+            df_well_optimisation.columns = pd.MultiIndex.from_tuples([
+                ("Optimal values", "Well"),
+                ("Optimal values", "Gas lift rate (mscfd)"),
+                ("Optimal values", "Oil rate (bopd)")
+            ])
+
+            df_combined = pd.concat([df_well_tests, df_well_optimisation], axis=1)
+
+            st.dataframe(
+                df_combined.style.format({
+                    ("Test values", "Gas lift rate (mscfd)"): "{:.0f}",
+                    ("Test values", "Oil rate (bopd)"): "{:.0f}",
+                    ("Test values", "Total fluid rate (bfpd)"): "{:.0f}",
+                    ("Optimal values", "Gas lift rate (mscfd)"): "{:.0f}",
+                    ("Optimal values", "Oil rate (bopd)"): "{:.0f}"
+                                    }),
+                hide_index=True,            )
+
+        except Exception as e:
+            st.error(f"Error displaying results: {str(e)}")
+            st.write("Data received:", well_tests)
+            st.write("Data received:", self.well_results)
