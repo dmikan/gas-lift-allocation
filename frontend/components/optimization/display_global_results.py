@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from app.components.utils.plotter import Plotter
+from frontend.components.utils.plotter import Plotter
 
 class DisplayGlobalResults:
     def __init__(self, optimization_results: dict, list_info: list):

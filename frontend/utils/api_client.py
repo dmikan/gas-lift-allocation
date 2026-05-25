@@ -3,7 +3,7 @@ import httpx
 from typing import List, Dict, Tuple, Any, Optional
 import streamlit as st
 
-from app.utils.models import FieldOptimization, WellOptimization
+from frontend.utils.models import FieldOptimization, WellOptimization
 
 class APIClient:
     """Client class handling exclusive HTTP communication with the FastAPI backend."""
@@ -123,7 +123,7 @@ class APIClient:
                 response = client.post(f"{self.base_url}/wells/tests/latest", json=payload)
                 response.raise_for_status()
                 data = response.json()
-                from app.utils.models import ProductionTest
+                from frontend.utils.models import ProductionTest
                 return [ProductionTest.from_dict(t) for t in data]
         except Exception as e:
             self._handle_connection_error(e)

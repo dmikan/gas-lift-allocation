@@ -1,8 +1,8 @@
 import streamlit as st
-from app.utils.api_client import APIClient
-from app.components.optimization.display_global_results import DisplayGlobalResults
-from app.components.optimization.display_constrained_results import DisplayConstrainedResults
-from app.utils.state_keys import StateKeys
+from frontend.utils.api_client import APIClient
+from frontend.components.optimization.display_global_results import DisplayGlobalResults
+from frontend.components.optimization.display_constrained_results import DisplayConstrainedResults
+from frontend.utils.state_keys import StateKeys
 
 class OptimizationExecutionComponent:
     def __init__(self, db=None):

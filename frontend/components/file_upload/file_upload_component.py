@@ -1,10 +1,10 @@
 import streamlit as st
 from pathlib import Path
 import os
-from app.components.file_upload.manual_input_component import ManualInputComponent
-from app.components.file_upload.csv_input_component import CSVInputComponent
-from app.components.file_upload.proper_input_component import ProperInputComponent
-from app.utils.state_keys import StateKeys
+from frontend.components.file_upload.manual_input_component import ManualInputComponent
+from frontend.components.file_upload.csv_input_component import CSVInputComponent
+from frontend.components.file_upload.proper_input_component import ProperInputComponent
+from frontend.utils.state_keys import StateKeys
 
 class FileUploadComponent:
 

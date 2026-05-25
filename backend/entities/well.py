@@ -1,37 +1,33 @@
 from typing import Optional
-from dataclasses import dataclass   
-from datetime import datetime
+from sqlmodel import SQLModel
 
-@dataclass
-class Well:
+class Well(SQLModel):
     """Class representing well-specific optimization results"""
-    id: int = None
+    id: Optional[int] = None
     wellbore: str = ""
     afe_id: int = 0
     pms_id: int = 0
     rig_id: int = 0
     field_id: int = 0 
-    is_offshore: bool = None   
+    is_offshore: Optional[bool] = None   
     subsidiary_id: int = 0 
     op_location_id: int = 0
 
-
     @classmethod
-    def from_dict(cls, data: dict) -> 'Well':
+    def from_dict(cls, data: dict) -> Optional['Well']:
         """Create object from dictionary"""
         if not data:
             return None
                     
-        data = {k.lower(): v for k, v in data.items()} 
+        d = {k.lower(): v for k, v in data.items()} 
         return cls(
-            id=data.get('id'),
-            wellbore=data.get('name', ''),
-            afe_id=data.get('AFE_ID', 0),
-            pms_id=data.get('PMS_ID', 0),
-            rig_id=data.get('RIG_ID', 0),
-            field_id=data.get('field_id', 0),
-            is_offshore=data.get('is_offshore'),
-            subsidiary_id=data.get('subsidiary_id', 0),
-            op_location_id=data.get('op_location_id', 0)
+            id=d.get('id'),
+            wellbore=d.get('name') or d.get('wellbore') or '',
+            afe_id=d.get('afe_id', 0),
+            pms_id=d.get('pms_id', 0),
+            rig_id=d.get('rig_id', 0),
+            field_id=d.get('field_id', 0),
+            is_offshore=d.get('is_offshore'),
+            subsidiary_id=d.get('subsidiary_id', 0),
+            op_location_id=d.get('op_location_id', 0)
         )
-       

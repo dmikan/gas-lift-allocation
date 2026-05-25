@@ -2,9 +2,9 @@ import uuid
 import streamlit as st
 import pandas as pd
 from pathlib import Path
-from app.styles.custom_styles import inject_global_css
-from app.utils.state_keys import StateKeys
-from app.utils.api_client import APIClient
+from frontend.styles.custom_styles import inject_global_css
+from frontend.utils.state_keys import StateKeys
+from frontend.utils.api_client import APIClient
 
 
 

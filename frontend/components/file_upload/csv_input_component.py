@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 from io import StringIO
-from app.styles.custom_styles import inject_global_css
-from app.utils.state_keys import StateKeys
+from frontend.styles.custom_styles import inject_global_css
+from frontend.utils.state_keys import StateKeys
 from pathlib import Path
 
 

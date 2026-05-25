@@ -1,5 +1,5 @@
 import streamlit as st
-from app.components.optimization.display_global_results import DisplayGlobalResults
+from frontend.components.optimization.display_global_results import DisplayGlobalResults
 
 
 class OptimizationSettingsComponent:

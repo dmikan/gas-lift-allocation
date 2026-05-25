@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
-from app.utils.api_client import APIClient
-from app.components.optimization.display_constrained_results import DisplayConstrainedResults
-from app.utils.models import FieldOptimization, WellOptimization
+from frontend.utils.api_client import APIClient
+from frontend.components.optimization.display_constrained_results import DisplayConstrainedResults
+from frontend.utils.models import FieldOptimization, WellOptimization
 
 class OptimizationHistoryComponent:
     def __init__(self, db=None):

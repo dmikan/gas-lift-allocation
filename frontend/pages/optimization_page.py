@@ -1,12 +1,12 @@
 import streamlit as st
 from pathlib import Path
-from app.components.file_upload.file_upload_component import FileUploadComponent
-from app.components.optimization.optimization_settings import OptimizationSettingsComponent
-from app.components.optimization.optimization_history import OptimizationHistoryComponent
-from app.components.optimization.optimization_execution import OptimizationExecutionComponent
-from app.components.optimization.optimization_results import OptimizationResultsComponent
-from app.utils.api_client import APIClient
-from app.utils.state_keys import StateKeys
+from frontend.components.file_upload.file_upload_component import FileUploadComponent
+from frontend.components.optimization.optimization_settings import OptimizationSettingsComponent
+from frontend.components.optimization.optimization_history import OptimizationHistoryComponent
+from frontend.components.optimization.optimization_execution import OptimizationExecutionComponent
+from frontend.components.optimization.optimization_results import OptimizationResultsComponent
+from frontend.utils.api_client import APIClient
+from frontend.utils.state_keys import StateKeys
 
 class OptimizationPage:
     """Page component responsible solely for high-level visual grid layout and tabs coordination."""

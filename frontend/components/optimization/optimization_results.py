@@ -1,8 +1,8 @@
 import streamlit as st
-from app.utils.state_keys import StateKeys
-from app.components.optimization.display_constrained_results import DisplayConstrainedResults
-from app.components.optimization.display_global_results import DisplayGlobalResults
-from app.components.optimization.optimization_report_generator import OptimizationReportGenerator
+from frontend.utils.state_keys import StateKeys
+from frontend.components.optimization.display_constrained_results import DisplayConstrainedResults
+from frontend.components.optimization.display_global_results import DisplayGlobalResults
+from frontend.components.optimization.optimization_report_generator import OptimizationReportGenerator
 
 class OptimizationResultsComponent:
     """Component responsible exclusively for displaying, toggling, and exporting optimization results."""

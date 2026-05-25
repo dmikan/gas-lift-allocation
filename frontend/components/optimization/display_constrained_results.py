@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
-from app.components.utils.plotter import Plotter
-from app.styles.custom_styles import inject_global_css
-from app.utils.models import ProductionTest, WellOptimization
-from app.utils.api_client import APIClient
+from frontend.components.utils.plotter import Plotter
+from frontend.styles.custom_styles import inject_global_css
+from frontend.utils.models import ProductionTest, WellOptimization
+from frontend.utils.api_client import APIClient
 
 class DisplayConstrainedResults:
     def __init__(self, optimization_results: dict, 

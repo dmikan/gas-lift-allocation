@@ -8,8 +8,7 @@ from backend.entities.field_optimization import FieldOptimization
 from backend.entities.well_optimization import WellOptimization
 from backend.repositories.field_optimization_repository import FieldOptimizationRepository
 from backend.repositories.well_optimization_repository import WellOptimizationRepository
-from backend.services.field_optimization_service import FieldOptimizationService
-from backend.services.well_optimization_service import WellOptimizationService
+from backend.services.optimization_service import OptimizationService
 from backend.services.fitting_service import FittingService
 from backend.services.optimization_constrained_pipeline_service import OptimizationConstrainedPipelineService
 from backend.services.optimization_global_pipeline_service import OptimizationGlobalPipelineService
@@ -87,8 +86,9 @@ def run_constrained_optimization(
 
         # Step 3: Fetch the newly saved well results
         well_repo = WellOptimizationRepository(session)
-        well_service = WellOptimizationService(well_repo)
-        well_results = well_service.get_latest_well_optimizations()
+        field_repo = FieldOptimizationRepository(session)
+        opt_service = OptimizationService(field_repo, well_repo)
+        well_results = opt_service.get_latest_well_optimizations()
 
         # Clean all numpy objects and serialise safely
         response_data = {
@@ -134,8 +134,9 @@ def get_optimization_history(
 ):
     """Fetch historical field optimization runs."""
     try:
-        repo = FieldOptimizationRepository(session)
-        service = FieldOptimizationService(repo)
+        field_repo = FieldOptimizationRepository(session)
+        well_repo = WellOptimizationRepository(session)
+        service = OptimizationService(field_repo, well_repo)
         history = service.list_field_optimizations(limit=limit)
         return [clean_numpy_and_nans(opt.to_dict()) for opt in history]
     except Exception as e:
@@ -168,8 +169,9 @@ def get_well_optimization_details(
 ):
     """Fetch the individual well optimization records for a specific field optimization ID."""
     try:
-        repo = WellOptimizationRepository(session)
-        service = WellOptimizationService(repo)
+        field_repo = FieldOptimizationRepository(session)
+        well_repo = WellOptimizationRepository(session)
+        service = OptimizationService(field_repo, well_repo)
         well_results = service.get_well_optimizations_by_optimization(opt_id)
         return [clean_numpy_and_nans(w.to_dict()) for w in well_results]
     except Exception as e:

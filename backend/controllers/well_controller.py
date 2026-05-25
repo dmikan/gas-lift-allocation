@@ -2,7 +2,6 @@ from fastapi import APIRouter
 from backend.services.well_service import WellService
 from pydantic import BaseModel
 from typing import List, Any
-import dataclasses
 import datetime
 
 router = APIRouter(prefix="/wells", tags=["Wells"])
@@ -45,15 +44,11 @@ def get_wells():
 def get_latest_tests(req: LatestTestsRequest):
     """Retrieve the latest production tests for the given wellbore names."""
     try:
-        from backend.repositories.production_test_repository import ProductionTestRepository
-        from backend.database import SnowflakeDB
+        service = WellService()
+        tests = service.get_latest_tests(well_names=req.well_names)
         
-        db = SnowflakeDB()
-        repo = ProductionTestRepository(db)
-        tests = repo.fetch_last_test(well_names=req.well_names)
-        
-        # Serialize dataclass objects using asdict
-        serialized_tests = [dataclasses.asdict(t) for t in tests]
+        # Serialize SQLModel objects using .dict()
+        serialized_tests = [t.dict() for t in tests]
         return clean_numpy_and_nans(serialized_tests)
     except Exception as e:
         print(f"Error fetching latest tests from Snowflake: {e}. Generating premium mock fallbacks.")
