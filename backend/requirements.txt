@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+sqlmodel
+snowflake-connector-python
+snowflake-snowpark-python
+pulp
+numpy
+pandas
+scipy
+scikit-learn
+python-dotenv
+python-multipart

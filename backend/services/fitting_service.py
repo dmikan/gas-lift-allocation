@@ -2,8 +2,6 @@
 import numpy as np
 from typing import List, Dict, Tuple, TypedDict
 from scipy import optimize
-import matplotlib.pyplot as plt
-
 
 class FittingService:
     """Service that handles all curve fitting operations and performance curve modeling"""

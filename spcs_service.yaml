@@ -1,0 +1,20 @@
+spec:
+  containers:
+    - name: backend
+      image: yspbjdx-sic32282.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_backend:latest
+      env:
+        # In SPCS, we can inherit the Snowflake session automatically if running in the cloud,
+        # but for local fallbacks or specific configs we can define variables here:
+        SNOWFLAKE_WAREHOUSE: COMPUTE_WH
+    - name: frontend
+      image: yspbjdx-sic32282.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_frontend:latest
+      env:
+        # Because both run in the same SPCS service instance, the frontend can call the backend on localhost
+        API_BASE_URL: http://localhost:8000/api
+  endpoints:
+    - name: ui
+      port: 8501
+      public: true
+    - name: backend-api
+      port: 8000
+      public: true

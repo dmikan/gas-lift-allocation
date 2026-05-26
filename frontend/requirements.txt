@@ -1,0 +1,8 @@
+streamlit
+httpx
+pandas
+numpy
+plotly
+matplotlib
+reportlab
+pypdf
