@@ -1,0 +1,58 @@
+name: Deploy Gas Lift to Snowflake SPCS
+
+on:
+  # activate workflow on push to main branch (or on release publish if you prefer that)
+  push:
+    branches: [ main ]
+
+  # can be activated on release publish instead if you prefer that
+  # release:
+  #   types: [published]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Snowflake Registry
+      uses: docker/login-action@v3
+      with:
+        registry: yspbjdx-sic32282.registry.snowflakecomputing.com
+        username: ${{ secrets.SNOWFLAKE_USER }}
+        password: ${{ secrets.SNOWFLAKE_PASSWORD }}
+
+    - name: Build and Push Backend
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: backend/Dockerfile
+        platforms: linux/amd64
+        push: true
+        tags: yspbjdx-sic32282.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_backend:latest
+
+    - name: Build and Push Frontend
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: frontend/Dockerfile
+        platforms: linux/amd64
+        push: true
+        tags: yspbjdx-sic32282.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_frontend:latest
+
+    - name: Execute ALTER SERVICE in Snowflake
+      uses: snowflake-actions/sql-action@v1
+      with:
+        account: yspbjdx-sic32282
+        username: ${{ secrets.SNOWFLAKE_USER }}
+        password: ${{ secrets.SNOWFLAKE_PASSWORD }}
+        role: SYSADMIN
+        warehouse: COMPUTE_WH
+        sql: |
+          PUT file://spcs_service.yaml @PROD.PUBLIC.SPCS_STAGES AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
+          ALTER SERVICE PROD.PUBLIC.GAS_LIFT_SERVICE RESTRUCT;

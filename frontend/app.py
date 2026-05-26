@@ -12,7 +12,7 @@ def main():
     # Configuration
     inject_global_css()
     st.set_page_config(page_title="Gas Lift Allocation Optimizer", layout="wide")
-    st.title("🛢️ Gas Lift Allocation Optimizer")
+    st.title("🛢️ Gas Lift Allocation Optimizer 🛢️")
 
     # --- Tabs ---
     tabs = st.sidebar.radio(
