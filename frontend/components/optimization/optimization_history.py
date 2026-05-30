@@ -1,14 +1,12 @@
 import streamlit as st
 import pandas as pd
 from frontend.utils.api_client import APIClient
-from frontend.components.optimization.display_constrained_results import DisplayConstrainedResults
 from frontend.utils.models import FieldOptimization, WellOptimization
 
 class OptimizationHistoryComponent:
     def __init__(self, db=None):
         # Signature compatibility, but using backend REST API exclusively
         self.api_client = APIClient()
-        self.display_constrained_results = None
         self.field_optimizations = []
         self.wells_optimizations = []
 
@@ -66,8 +64,7 @@ class OptimizationHistoryComponent:
             if selected_optimization:
                 st.subheader(f"Detailed Results for Field {selected_optimization.field_name}")
 
-                self.display_constrained_results = DisplayConstrainedResults(selected_optimization, self.wells_optimizations)
-                self.display_constrained_results._show_optimization_well_results_table()
+                self._show_optimization_well_results_table()
                 st.warning("The behavior graphs are not available in the history yet...")
                 
                 csv = pd.DataFrame([{
@@ -83,3 +80,31 @@ class OptimizationHistoryComponent:
                     file_name=f"optimization_results_{selected_optimization.id}.csv",
                     mime='text/csv'
                 )
+
+    def _show_optimization_well_results_table(self):
+        if not self.wells_optimizations:
+            st.warning("No well data available to display")
+            return
+        try:
+            well_data = [{
+                "Well identifier": getattr(result, 'well_name', 'N/A'),
+                "Gas lift rate (mscfd)": getattr(result, 'optimal_gas_injection', 0),
+                "Oil rate (bopd)": getattr(result, 'optimal_production', 0)
+            } for result in self.wells_optimizations]
+
+            df = pd.DataFrame(well_data)
+            df.columns = pd.MultiIndex.from_tuples([
+                ("Optimal values", "Well identifier"),
+                ("Optimal values", "Gas lift rate (mscfd)"),
+                ("Optimal values", "Oil rate (bopd)")
+            ])
+            st.dataframe(
+                df.style.format({
+                    ("Optimal values", "Gas lift rate (mscfd)"): "{:.0f}",
+                    ("Optimal values", "Oil rate (bopd)"): "{:.0f}"
+                }),
+                hide_index=True,
+            )
+        except Exception as e:
+            st.error(f"Error displaying results: {str(e)}")
+            st.write("Data received:", self.wells_optimizations)

@@ -36,11 +36,10 @@ class DisplayConstrainedResults:
         self._plot_well_curves()
 
     def show_detailed_results_by_well(self):
-        self._show_optimization_well_results_table()
         well_names = [getattr(result, 'well_name', '') for result in self.well_results if getattr(result, 'well_name', '')]
         if well_names:
             well_tests = self.api_client.get_latest_well_tests(well_names)
-            self._show_well_test_table(well_tests)
+            self._show_optimization_and_well_tests_table(well_tests)
 
     '''
     Method to display the summary metrics of the optimization.
@@ -85,78 +84,6 @@ class DisplayConstrainedResults:
         self.plotter = Plotter(self.optimization_results)
         fig_prod = self.plotter.create_well_curves(self.well_results)
         st.plotly_chart(fig_prod, use_container_width=True)
-
-
-
-
-    def _show_optimization_well_results_table(self):
-        if not self.well_results:
-            st.warning("No well data available to display")
-            return
-        try:
-            well_data = [{
-                "Well identifier": getattr(result, 'well_name', 'N/A'),
-                "Gas lift rate (mscfd)": getattr(result, 'optimal_gas_injection', 0),
-                "Oil rate (bopd)": getattr(result, 'optimal_production', 0)
-            } for result in self.well_results]
-
-            df = pd.DataFrame(well_data)
-            if "Well identifier" not in df.columns:
-                df = df.rename(columns={"well_name": "Well identifier"})
-            # Header row "Optimal values" above all column names (full row span)
-            df.columns = pd.MultiIndex.from_tuples([
-                ("Optimal values", "Well identifier"),
-                ("Optimal values", "Gas lift rate (mscfd)"),
-                ("Optimal values", "Oil rate (bopd)")
-            ])
-            st.dataframe(
-                df.style.format({
-                    ("Optimal values", "Gas lift rate (mscfd)"): "{:.0f}",
-                    ("Optimal values", "Oil rate (bopd)"): "{:.0f}"
-                }),
-                hide_index=True,
-            )
-
-        except Exception as e:
-            st.error(f"Error displaying results: {str(e)}")
-            st.write("Data received:", self.well_results)
-
-
-    def _show_well_test_table(self, well_tests: list[ProductionTest]):
-            if not well_tests:
-                st.warning("No well test data available to display")
-                return
-            try:
-                well_test_data = [{
-                    "Well": getattr(test, 'wellbore_ci_name', 'N/A'),
-                    "Test Date": getattr(test, 'test_date', 'N/A'),
-                    "Gas lift rate (mscfd)": getattr(test, 'q_gl', 0),
-                    "Oil rate (bopd)": getattr(test, 'q_oil', 0), 
-                    "Total_fluid_rate (bfpd)": getattr(test, 'q_liquid', 0)
-                } for test in well_tests]
-
-                df = pd.DataFrame(well_test_data)
-                
-                df.columns = pd.MultiIndex.from_tuples([
-                    ("Test values", "Well"),
-                    ("Test values", "Test Date"),
-                    ("Test values", "Gas lift rate (mscfd)"),
-                    ("Test values", "Oil rate (bopd)"),
-                    ("Test values", "Total fluid rate (bfpd)")
-                ])
-                st.dataframe(
-                    df.style.format({
-                        ("Test values", "Gas lift rate (mscfd)"): "{:.0f}",
-                        ("Test values", "Oil rate (bopd)"): "{:.0f}",
-                        ("Test values", "Total fluid rate (bfpd)"): "{:.0f}",
-                                        }),
-                    hide_index=True,
-                )
-
-            except Exception as e:
-                st.error(f"Error displaying results: {str(e)}")
-                st.write("Data received:", well_tests)
-
 
 
     def _show_optimization_and_well_tests_table(self, well_tests: list[ProductionTest]):
