@@ -60,7 +60,7 @@ class OptimizationPage:
                     constrained_settings = self.optimization_settings.choose_constrained_settings(
                         use_expander=False,
                         render_button=lambda s: self.optimization_execution.run_constrained_optimization(
-                            self.loaded_data, s, message_outside=True
+                            self.loaded_data, s
                         ),
                     )
                 if StateKeys.SESSION_KEY_CONSTR in st.session_state and StateKeys.SESSION_KEY_WELL in st.session_state:
@@ -74,7 +74,7 @@ class OptimizationPage:
                     global_settings = self.optimization_settings.choose_global_settings(
                         use_expander=False,
                         render_button=lambda s: self.optimization_execution.run_global_optimization(
-                            self.loaded_data, s, message_outside=True
+                            self.loaded_data, s
                         ),
                     )
                 if StateKeys.SESSION_KEY_GLOBAL in st.session_state:

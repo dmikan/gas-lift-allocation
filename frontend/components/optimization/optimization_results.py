@@ -70,11 +70,11 @@ class OptimizationResultsComponent:
                 st.session_state[StateKeys.SESSION_KEY_CONSTR],
                 st.session_state[StateKeys.SESSION_KEY_WELL],
             )
+            display.show_detailed_results_by_well()
             c1, c2 = st.columns([1, 2])
             with c1:
                 display.show_summary_metrics()
                 st.markdown("---")
-                display.show_detailed_results_by_well()
             with c2:
                 display.show_production_curves()
         else:
@@ -89,6 +89,7 @@ class OptimizationResultsComponent:
             display = DisplayGlobalResults(
                 st.session_state[StateKeys.SESSION_KEY_GLOBAL],
                 list_info,
+                loaded_data,
             )
             g1, g2 = st.columns([1, 5])
             with g1:

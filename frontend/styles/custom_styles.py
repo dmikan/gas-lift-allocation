@@ -213,7 +213,7 @@ def inject_global_css():
 
     /* ─────────────────────────────────────────────
        METRIC CARDS (vertical layout + two-column wrapper)
-    ───────────────────────────────────────────── */
+     ───────────────────────────────────────────── */
     .metric-cards-two-cols {
         display: flex;
         flex-direction: row;
@@ -261,6 +261,38 @@ def inject_global_css():
         margin-top: 8px;
         color: #00E676;
     }
+
+/* ─────────────────────────────────────────────
+       NATIVE STREAMLIT METRICS STYLE (st.metric override)
+     ───────────────────────────────────────────── */
+    [data-testid="stMetric"] {
+        background: rgba(128, 128, 128, 0.08) !important;
+        border: 1px solid rgba(128, 128, 128, 0.18) !important;
+        border-radius: 12px !important;
+        padding: 14px 18px !important;
+        transition: all 0.25s ease !important;
+    }
+    [data-testid="stMetricLabel"] {
+        font-size: 11px !important; 
+        font-weight: 600 !important;
+        letter-spacing: 0.02em !important;
+        text-transform: uppercase !important;
+        color: var(--text-color) !important;
+        opacity: 0.75 !important;
+        
+        /* Ajustes para evitar el corte con puntos suspensivos (...) */
+        white-space: normal !important;      
+        word-break: break-word !important;  
+        text-overflow: unset !important;     
+    }
+    [data-testid="stMetricValue"] {
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        color: var(--text-color) !important;
+    }
     </style>
     """
     st.markdown(custom_css, unsafe_allow_html=True)
+
+
+    
