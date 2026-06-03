@@ -85,8 +85,18 @@ class DisplayConstrainedResults:
         if not self.optimization_results.get('plot_data') or not self.well_results:
             st.warning("No data available to plot")
             return
+        
+        # Retrieve latest well tests to pass to the plotter
+        well_tests = None
+        well_names = [getattr(result, 'well_name', '') for result in self.well_results if getattr(result, 'well_name', '')]
+        if well_names:
+            try:
+                well_tests = self.api_client.get_latest_well_tests(well_names)
+            except Exception:
+                pass
+
         self.plotter = Plotter(self.optimization_results)
-        fig_prod = self.plotter.create_well_curves(self.well_results)
+        fig_prod = self.plotter.create_well_curves(self.well_results, well_tests=well_tests)
         st.plotly_chart(fig_prod, use_container_width=True)
 
 

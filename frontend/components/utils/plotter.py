@@ -12,6 +12,7 @@ class Plotter:
         self.optimal_line_color = "#FF5252"
         self.last_value_line_color = "#FF1744"
         self.fluid_line_color = "#E0970E"
+        self.marker_test_color = "#29B6F6"
         self.optimization_results = optimization_results
         self.baseline_qgl = None
         self.baseline_production = None
@@ -109,7 +110,15 @@ class Plotter:
     This method is responsible for creating a well curves chart using Plotly.
     It creates a line chart with markers for production and gas injection, as well as optimal lines and optimal points.
     '''
-    def create_well_curves(self, well_results):
+    def create_well_curves(self, well_results, well_tests=None):
+        # Create a mapping for quick well test lookup
+        well_test_map = {}
+        if well_tests:
+            for test in well_tests:
+                well_name = getattr(test, 'wellbore_ci_name', None)
+                if well_name:
+                    well_test_map[well_name] = test
+
         cols = 1
         rows = int(ceil(len(well_results) / cols))
         # Fixed pixel height per subplot and fixed gap; grid height excludes margins
@@ -240,6 +249,55 @@ class Plotter:
                 row=row, col=col
             )
 
+
+            # Current actual values from the latest well test
+            test_data = well_test_map.get(well_result.well_name)
+            if test_data:
+                current_qgl = getattr(test_data, 'q_gl', 0)
+                current_oil = getattr(test_data, 'q_oil', 0)
+                current_fluid = getattr(test_data, 'q_liquid', 0)
+
+                # Marker for Current Oil Point
+                fig_prod.add_trace(
+                    go.Scatter(
+                        x=[current_qgl],
+                        y=[current_oil],
+                        mode='markers+text',
+                        name='Oil Last Test',
+                        marker=dict(
+                            color="#FF5252",
+                            size=12,
+                            symbol='diamond'
+                        ),
+                        text=["Oil Last Test"],
+                        textposition="top center",
+                        textfont=dict(color="#FF5252", size=11, weight="bold"),
+                        showlegend=True if idx == 0 else False,
+                        legendgroup='group10'
+                    ),
+                    row=row, col=col
+                )
+
+                # Marker for Current Fluid Point
+                fig_prod.add_trace(
+                    go.Scatter(
+                        x=[current_qgl],
+                        y=[current_fluid],
+                        mode='markers+text',
+                        name='Fluid Last Test',
+                        marker=dict(
+                            color="#FF5252",
+                            size=12,
+                            symbol='star'
+                        ),
+                        text=["Fluid Last Test"],
+                        textposition="top center",
+                        textfont=dict(color="#FF5252", size=11, weight="bold"),
+                        showlegend=True if idx == 0 else False,
+                        legendgroup='group11'
+                    ),
+                    row=row, col=col
+                )
 
             fig_prod.add_trace(
                 go.Scatter(
