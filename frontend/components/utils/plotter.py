@@ -22,7 +22,7 @@ class Plotter:
     This method is responsible for creating a global optimization chart using Plotly.
     It creates a line chart with markers for total production and a horizontal line for the last production value.
     '''
-    def create_global_curve(self, baseline_qgl=None, baseline_production=None):
+    def create_global_curve(self, baseline_qgl=None, baseline_production=None, oil_opt_at_baseline=None):
         self.baseline_qgl = baseline_qgl
         self.baseline_production = baseline_production
         last_production = self.optimization_results["total_production"][-1] if self.optimization_results["total_production"] else 0
@@ -49,8 +49,25 @@ class Plotter:
                     name='Last Tests Baseline',
                     marker=dict(color=self.optimal_line_color, size=12, symbol='star'),
                     text=["Baseline (Last Tests)"],
-                    textposition="top center",
+                    textposition="bottom center",
                     textfont=dict(color=self.optimal_line_color, size=11, weight="bold"),
+                    showlegend=True
+                )
+            )
+
+        if self.baseline_qgl is not None and oil_opt_at_baseline is not None:
+            fig.add_trace(
+                go.Scatter(
+                    x=[self.baseline_qgl],
+                    y=[oil_opt_at_baseline],
+                    mode='markers+text',
+                    name='Optimized at Baseline QGL',
+                    marker=dict(color=self.line_color, 
+                                size=12, 
+                                symbol='star'),
+                    text=["Optimized at Baseline QGL"],
+                    textposition="top center",
+                    textfont=dict(color=self.line_color, size=11, weight="bold"),
                     showlegend=True
                 )
             )

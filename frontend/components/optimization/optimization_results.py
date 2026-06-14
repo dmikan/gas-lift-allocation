@@ -2,7 +2,7 @@ import streamlit as st
 from frontend.utils.state_keys import StateKeys
 from frontend.components.optimization.display_constrained_results import DisplayConstrainedResults
 from frontend.components.optimization.display_global_results import DisplayGlobalResults
-from frontend.components.optimization.optimization_report_generator import OptimizationReportGenerator
+from frontend.components.optimization.reports import OptimizationReportGenerator
 
 class OptimizationResultsComponent:
     """Component responsible exclusively for displaying, toggling, and exporting optimization results."""
@@ -43,11 +43,24 @@ class OptimizationResultsComponent:
             _, _, _, list_info = loaded_data
             
         try:
+            # Fetch well tests once so the PDF mirrors the full UI content
+            well_results = st.session_state.get(StateKeys.SESSION_KEY_WELL) or []
+            well_tests = None
+            if well_results:
+                well_names = [getattr(r, 'well_name', '') for r in well_results if getattr(r, 'well_name', '')]
+                if well_names:
+                    try:
+                        well_tests = self.api_client.get_latest_well_tests(well_names)
+                    except Exception:
+                        pass
+
             gen = OptimizationReportGenerator(
                 constrained_optimization_results=st.session_state.get(StateKeys.SESSION_KEY_CONSTR),
-                well_results=st.session_state.get(StateKeys.SESSION_KEY_WELL),
+                well_results=well_results,
                 global_optimization_results=st.session_state.get(StateKeys.SESSION_KEY_GLOBAL),
                 list_info=list_info,
+                well_tests=well_tests,
+                oil_opt_at_baseline=st.session_state.get("oil_opt_at_baseline"),
             )
             pdf_bytes = gen.build_pdf()
             st.download_button(
