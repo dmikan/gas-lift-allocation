@@ -23,7 +23,7 @@ jobs:
     - name: Log in to Snowflake Registry
       uses: docker/login-action@v3
       with:
-        registry: yspbjdx-sic32282.registry.snowflakecomputing.com
+        registry: uspccgj-sj32318.registry.snowflakecomputing.com
         username: ${{ secrets.SNOWFLAKE_USER }}
         password: ${{ secrets.SNOWFLAKE_PASSWORD }}
 
@@ -34,7 +34,7 @@ jobs:
         file: backend/Dockerfile
         platforms: linux/amd64
         push: true
-        tags: yspbjdx-sic32282.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_backend:latest
+        tags: uspccgj-sj32318.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_backend:latest
 
     - name: Build and Push Frontend
       uses: docker/build-push-action@v5
@@ -43,12 +43,12 @@ jobs:
         file: frontend/Dockerfile
         platforms: linux/amd64
         push: true
-        tags: yspbjdx-sic32282.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_frontend:latest
+        tags: uspccgj-sj32318.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_frontend:latest
 
     - name: Execute ALTER SERVICE in Snowflake
       uses: snowflake-actions/sql-action@v1
       with:
-        account: yspbjdx-sic32282
+        account: uspccgj-sj32318
         username: ${{ secrets.SNOWFLAKE_USER }}
         password: ${{ secrets.SNOWFLAKE_PASSWORD }}
         role: SYSADMIN
