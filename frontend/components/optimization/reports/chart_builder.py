@@ -32,8 +32,8 @@ def build_global_curve_figure(
     last_prod, last_qgl = total_production[-1], total_qgl[-1]
 
     fig, ax = plt.subplots(figsize=(FIG_WIDTH_INCH, 5.0))
-    ax.plot(total_qgl, total_production, "o-", color="#2b6cb0", linewidth=1.2, markersize=5, label="Total production")
-    ax.axhline(y=last_prod, color="#c53030", linestyle="--", linewidth=1.0, label=f"Physical limit: {last_prod:.0f} bopd")
+    ax.plot(total_qgl, total_production, "o-", color="#2b6cb0", linewidth=1.2, markersize=5, label="Max total production")
+    ax.axhline(y=last_prod, color="#c53030", linestyle="--", linewidth=1.0, label=f"Physical productionlimit: {last_prod:.0f} bopd")
 
     # Baseline (last well tests) star marker — mirrors the UI Plotly chart
     if baseline_qgl is not None and baseline_production is not None:
@@ -56,7 +56,7 @@ def build_global_curve_figure(
         ax.plot(
             baseline_qgl, oil_opt_at_baseline,
             marker="+", color="#276749", markersize=12, markeredgewidth=2.5, linestyle="None",
-            label="Optimized at Baseline QGL",
+            label="Maximal oil production with current gas available",
         )
         ax.annotate(
             f"({baseline_qgl:.0f}, {oil_opt_at_baseline:.0f})",
@@ -67,8 +67,9 @@ def build_global_curve_figure(
             color="#276749",
         )
 
-    ax.set_xlabel("Total gas injection limit (mscfd)", fontsize=10)
-    ax.set_ylabel("Total optimal oil production (bopd)", fontsize=10)
+    #TODO: modify name qgl_limit to qgl_available in UI and backend for clarity
+    ax.set_xlabel("Total gas injection available (mscfd)", fontsize=10)
+    ax.set_ylabel("Maximal oil production (bopd)", fontsize=10)
     ax.minorticks_on()
     ax.grid(True, which="major", linestyle=":", alpha=0.6)
     ax.grid(True, which="minor", linestyle="--", alpha=0.35)
@@ -107,7 +108,7 @@ def build_well_curves_figure(constrained_results: dict, well_results: list, well
             orig_qgl = list(well_data.get("q_gl_original") or [])
             orig_fluid = list(well_data.get("q_fluid_original") or [])
             if orig_qgl and orig_fluid:
-                ax.plot(orig_qgl, orig_fluid, "o", color="#2b6cb0", markersize=5, alpha=0.5, label="Data points")
+                ax.plot(orig_qgl, orig_fluid, "o", color="#2b6cb0", markersize=5, alpha=0.5, label="Sensitivity tests")
 
             # Subtle fills under the curves up to opt_qgl
             opt_qgl = getattr(well_result, "optimal_gas_injection", None)
