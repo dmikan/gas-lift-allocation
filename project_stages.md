@@ -19,6 +19,7 @@ TODO:
 4. incluir un slider para mirar una ventana de pruebas del histórico (con color para fechas). 
 5. tarea pendiente: generar un script propio para el contenido de results_of_optimization (snowpark container)
 6. llm para generar un analisis automático de la optimización. 
+7. agregar slider en optimización global.
 
 7. modifcar la interfaz de carga (nombre de la planta, selección de pozos (prosper)) para evitar los posibles erroes de formato en el csv. 
 8. (baja) tabla en base de datos para información de optimizacion global. 
