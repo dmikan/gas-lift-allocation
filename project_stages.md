@@ -26,6 +26,7 @@ TODO:
 9. agregar MRP a optimizacion global (OK con clonclusion: no depende del MPR)
 10. (criticidad baja) modelo mrp opcional actibable/desactivable. fisico y económico (usar varios pozos de los datos ya disponibles). 
 11. convertir proper a clases._
+12. Añadir intervalos de confianza para la producción.
 
 
 UNKOWN:
