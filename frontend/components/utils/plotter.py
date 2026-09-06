@@ -172,6 +172,82 @@ class Plotter:
             MRP_qgl_index = list(self.optimization_results["q_gl_common_range"]).index(MRP_qgl)
             MRP_fluid = list(well_data["q_fluid_predicted"])[MRP_qgl_index]
 
+            # 95% Confidence & Prediction Intervals Shaded Bands
+            if "q_fluid_pi_lower" in well_data and "q_fluid_pi_upper" in well_data:
+                qgl_list = list(well_data["q_gl_common_range"])
+                pi_lower = list(well_data["q_fluid_pi_lower"])
+                pi_upper = list(well_data["q_fluid_pi_upper"])
+                fig_prod.add_trace(
+                    go.Scatter(
+                        x=qgl_list + qgl_list[::-1],
+                        y=pi_upper + pi_lower[::-1],
+                        fill='toself',
+                        fillcolor='rgba(224, 151, 14, 0.05)',  # translucent fluid color
+                        line=dict(color='rgba(255,255,255,0)'),
+                        hoverinfo="skip",
+                        showlegend=True if idx == 0 else False,
+                        name='Fluid 95% Pred Interval',
+                        legendgroup='group_fluid_pi'
+                    ),
+                    row=row, col=col
+                )
+
+            if "q_fluid_ci_lower" in well_data and "q_fluid_ci_upper" in well_data:
+                qgl_list = list(well_data["q_gl_common_range"])
+                ci_lower = list(well_data["q_fluid_ci_lower"])
+                ci_upper = list(well_data["q_fluid_ci_upper"])
+                fig_prod.add_trace(
+                    go.Scatter(
+                        x=qgl_list + qgl_list[::-1],
+                        y=ci_upper + ci_lower[::-1],
+                        fill='toself',
+                        fillcolor='rgba(224, 151, 14, 0.15)',  # translucent fluid color
+                        line=dict(color='rgba(255,255,255,0)'),
+                        hoverinfo="skip",
+                        showlegend=True if idx == 0 else False,
+                        name='Fluid 95% Conf Interval',
+                        legendgroup='group_fluid_ci'
+                    ),
+                    row=row, col=col
+                )
+
+            if "q_oil_pi_lower" in well_data and "q_oil_pi_upper" in well_data:
+                qgl_list = list(well_data["q_gl_common_range"])
+                pi_lower_oil = list(well_data["q_oil_pi_lower"])
+                pi_upper_oil = list(well_data["q_oil_pi_upper"])
+                fig_prod.add_trace(
+                    go.Scatter(
+                        x=qgl_list + qgl_list[::-1],
+                        y=pi_upper_oil + pi_lower_oil[::-1],
+                        fill='toself',
+                        fillcolor='rgba(0, 230, 118, 0.05)',  # translucent oil color
+                        line=dict(color='rgba(255,255,255,0)'),
+                        hoverinfo="skip",
+                        showlegend=True if idx == 0 else False,
+                        name='Oil 95% Pred Interval',
+                        legendgroup='group_oil_pi'
+                    ),
+                    row=row, col=col
+                )
+
+            if "q_oil_ci_lower" in well_data and "q_oil_ci_upper" in well_data:
+                qgl_list = list(well_data["q_gl_common_range"])
+                ci_lower_oil = list(well_data["q_oil_ci_lower"])
+                ci_upper_oil = list(well_data["q_oil_ci_upper"])
+                fig_prod.add_trace(
+                    go.Scatter(
+                        x=qgl_list + qgl_list[::-1],
+                        y=ci_upper_oil + ci_lower_oil[::-1],
+                        fill='toself',
+                        fillcolor='rgba(0, 230, 118, 0.15)',  # translucent oil color
+                        line=dict(color='rgba(255,255,255,0)'),
+                        hoverinfo="skip",
+                        showlegend=True if idx == 0 else False,
+                        name='Oil 95% Conf Interval',
+                        legendgroup='group_oil_ci'
+                    ),
+                    row=row, col=col
+                )
 
             fig_prod.add_trace(
                 go.Scatter(
@@ -201,19 +277,42 @@ class Plotter:
                 row=row, col=col
             )
 
+            # Real Fluid Data points
             fig_prod.add_trace(
                 go.Scatter(
                     x=well_data["q_gl_original"],
                     y=well_data["q_fluid_original"],
                     mode='markers',
-                    name='Real Data',
+                    name='Real Fluid Data',
                     marker=dict(
-                        color=self.marker_color,
+                        color='#FFCC80',  # Light orange to match fluid
                         size=7,
                         line=dict(width=1, color='DarkSlateGrey')
                     ),
+                    hovertemplate="QGL: %{x:.0f} mscfd<br>Fluid (Real): %{y:.1f} bfpd<extra></extra>",
                     showlegend=True if idx == 0 else False,
-                    legendgroup='group3'
+                    legendgroup='group3_fluid'
+                ),
+                row=row, col=col
+            )
+
+            # Real Oil Data points (scaled by 1 - bsw/wct)
+            wct = well_data.get("wct", 0.0)
+            q_oil_original = [y_val * (1 - wct) for y_val in well_data["q_fluid_original"]]
+            fig_prod.add_trace(
+                go.Scatter(
+                    x=well_data["q_gl_original"],
+                    y=q_oil_original,
+                    mode='markers',
+                    name='Real Oil Data',
+                    marker=dict(
+                        color=self.marker_color,  # Light green to match oil
+                        size=7,
+                        line=dict(width=1, color='DarkSlateGrey')
+                    ),
+                    hovertemplate="QGL: %{x:.0f} mscfd<br>Oil (Real): %{y:.1f} bopd<extra></extra>",
+                    showlegend=True if idx == 0 else False,
+                    legendgroup='group3_oil'
                 ),
                 row=row, col=col
             )

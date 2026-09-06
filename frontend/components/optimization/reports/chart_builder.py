@@ -108,7 +108,10 @@ def build_well_curves_figure(constrained_results: dict, well_results: list, well
             orig_qgl = list(well_data.get("q_gl_original") or [])
             orig_fluid = list(well_data.get("q_fluid_original") or [])
             if orig_qgl and orig_fluid:
-                ax.plot(orig_qgl, orig_fluid, "o", color="#2b6cb0", markersize=5, alpha=0.5, label="Sensitivity tests")
+                wct = well_data.get("wct", 0.0)
+                orig_oil = [y_val * (1 - wct) for y_val in orig_fluid]
+                ax.plot(orig_qgl, orig_fluid, "o", color="#dd6b20", markersize=5, alpha=0.5, label="Fluid Tests")
+                ax.plot(orig_qgl, orig_oil, "o", color="#276749", markersize=5, alpha=0.5, label="Oil Tests")
 
             # Subtle fills under the curves up to opt_qgl
             opt_qgl = getattr(well_result, "optimal_gas_injection", None)

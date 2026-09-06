@@ -34,7 +34,7 @@ jobs:
         file: backend/Dockerfile
         platforms: linux/amd64
         push: true
-        tags: uspccgj-sj32318.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_backend:latest
+        tags: zneenng-hz50319.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_backend:latest
 
     - name: Build and Push Frontend
       uses: docker/build-push-action@v5
@@ -43,12 +43,12 @@ jobs:
         file: frontend/Dockerfile
         platforms: linux/amd64
         push: true
-        tags: uspccgj-sj32318.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_frontend:latest
+        tags: zneenng-hz50319.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_frontend:latest
 
     - name: Execute ALTER SERVICE in Snowflake
       uses: snowflake-actions/sql-action@v1
       with:
-        account: uspccgj-sj32318
+        account: zneenng-hz50319
         username: ${{ secrets.SNOWFLAKE_USER }}
         password: ${{ secrets.SNOWFLAKE_PASSWORD }}
         role: SYSADMIN

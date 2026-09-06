@@ -2,6 +2,7 @@
 import numpy as np
 from typing import List, Dict, Tuple, TypedDict
 from scipy import optimize
+from backend.services.regression_service import NamdarRegressor
 
 class FittingService:
     """Service that handles all curve fitting operations and performance curve modeling"""
@@ -52,6 +53,22 @@ class FittingService:
         )
         return p0, bounds
 
+    def _fit_model_with_regression(self, q_gl: np.ndarray, q_fluid: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Internal method to fit a single well's data and calculate intervals using NamdarRegressor"""
+        try:
+            _, bounds = self._trinidad_parameters()
+            regressor = NamdarRegressor()
+            regressor.fit(q_gl, q_fluid, bounds=bounds)
+            
+            y_pred = regressor.predict(self.q_gl_common_range)
+            ci_lower, ci_upper, pi_lower, pi_upper = regressor.predict_intervals(self.q_gl_common_range)
+            
+            return np.maximum(y_pred, 0), ci_lower, ci_upper, pi_lower, pi_upper
+        except Exception as e:
+            print(f"❌ Error in regression fitting: {str(e)}")
+            fallback_pred = np.zeros_like(self.q_gl_common_range) + np.mean(q_fluid)
+            return fallback_pred, fallback_pred.copy(), fallback_pred.copy(), fallback_pred.copy(), fallback_pred.copy()
+
     def _fit_model(self, q_gl: np.ndarray, q_fluid: np.ndarray) -> np.ndarray:
         """Internal method to fit a single well's data"""
         try:
@@ -78,7 +95,7 @@ class FittingService:
         q_gl_common_range = np.maximum(q_gl_common_range, 1e-10)
         return (
             a + b * q_gl_common_range + c * (q_gl_common_range ** 0.7) +
-            d * np.log(q_gl_common_range) + e * np.exp(-(q_gl_common_range ** 0.6)))
+            d * np.log(q_gl_common_range + 0.9) + e * np.exp(-(q_gl_common_range ** 0.6)))
 
 
     def _model_dan(self, q_gl_common_range: np.ndarray, a: float, b: float, c: float,
@@ -107,17 +124,26 @@ class FittingService:
 
             # Prepare, clean data and perform fitting
             q_gl_clean, q_fluid_clean = self._prepare_well_data(q_gl, q_fluid)
-            y_pred_fluid = self._fit_model(q_gl_clean, q_fluid_clean)
+            y_pred_fluid, ci_lower, ci_upper, pi_lower, pi_upper = self._fit_model_with_regression(q_gl_clean, q_fluid_clean)
             self.y_pred_fluid_list.append(y_pred_fluid)
 
-            # Store plot data
+            wct = self.wct_list[well_num]
             self.plot_data.append({
                 "well_num": well_num + 1,
+                "wct": wct,
                 "q_gl_original": q_gl_clean,
                 "q_fluid_original": q_fluid_clean,
                 "q_gl_common_range": self.q_gl_common_range,
                 "q_fluid_predicted": y_pred_fluid,
-                "q_oil_predicted": y_pred_fluid * (1 - self.wct_list[well_num])
+                "q_fluid_ci_lower": ci_lower,
+                "q_fluid_ci_upper": ci_upper,
+                "q_fluid_pi_lower": pi_lower,
+                "q_fluid_pi_upper": pi_upper,
+                "q_oil_predicted": y_pred_fluid * (1 - wct),
+                "q_oil_ci_lower": ci_lower * (1 - wct),
+                "q_oil_ci_upper": ci_upper * (1 - wct),
+                "q_oil_pi_lower": pi_lower * (1 - wct),
+                "q_oil_pi_upper": pi_upper * (1 - wct)
             })
 
         return {

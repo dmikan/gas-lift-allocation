@@ -1,7 +1,7 @@
 spec:
   containers:
     - name: backend
-      image: uspccgj-sj32318.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_backend:latest
+      image: zneenng-hz50319.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_backend:latest
       env:
         # --- basic Snowflake configuration ---
         SNOWFLAKE_WAREHOUSE: COMPUTE_WH         
@@ -22,7 +22,7 @@ spec:
         RAW_SNOWFLAKE_ROLE: ACCOUNTADMIN         
         
     - name: frontend
-      image: uspccgj-sj32318.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_frontend:latest
+      image: zneenng-hz50319.registry.snowflakecomputing.com/prod/public/gas_lift_images/gas_lift_frontend:latest
       env:
         # Because both run in the same SPCS service instance, the frontend can call the backend on localhost
         API_BASE_URL: http://localhost:8000/api
