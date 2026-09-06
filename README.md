@@ -1,26 +1,26 @@
 # 🛢️ Gas Lift Allocation Optimizer - Backend & Deployment Guide
 
-Sistema de optimización para la asignación de inyección de gas lift en pozos petroleros. Este repositorio incluye un backend de alto rendimiento desarrollado en **FastAPI**, modelos matemáticos de optimización lineal y no lineal con **PuLP** y **SciPy**, persistencia relacional con **SQLModel / SQLite**, integración nativa con **Snowflake**, y una interfaz interactiva en **Streamlit**.
+Production-grade gas lift injection allocation and optimization system for oil wells. This repository includes a high-performance **FastAPI** backend, mathematical linear and non-linear optimization models powered by **PuLP** and **SciPy**, relational persistence with **SQLModel / SQLite**, native **Snowflake** integration, and an interactive **Streamlit** user interface.
 
 ---
 
-## 📑 Tabla de Contenidos
-1. [Arquitectura General](#-arquitectura-general)
-2. [Estructura del Backend](#-estructura-del-backend)
-3. [Configuración y Variables de Entorno](#-configuración-y-variables-de-entorno)
-4. [Documentación de la API y Controladores](#-documentación-de-la-api-y-controladores)
+## 📑 Table of Contents
+1. [General Architecture](#-general-architecture)
+2. [Backend Directory Structure](#-backend-directory-structure)
+3. [Environment Configuration & Variables](#-environment-configuration--variables)
+4. [API & Controller Documentation](#-api--controller-documentation)
    - [Root / Health](#1-root--health)
    - [Data Controller (`/api/data`)](#2-data-controller-apidata)
    - [Well Controller (`/api/wells`)](#3-well-controller-apiwells)
    - [Optimization Controller (`/api/optimization`)](#4-optimization-controller-apioptimization)
-5. [Ejecución en Entorno Local](#-ejecución-en-entorno-local)
-6. [Despliegue 1: Manual en Snowflake Container Services (SPCS)](#-despliegue-1-manual-en-snowflake-container-services-spcs)
-7. [Despliegue 2: CI/CD Automatizado con GitHub Actions](#-despliegue-2-cicd-automatizado-con-github-actions)
-8. [Monitoreo y Solución de Problemas (Troubleshooting)](#-monitoreo-y-solución-de-problemas-troubleshooting)
+5. [Local Development Setup](#-local-development-setup)
+6. [Deployment 1: Manual Deployment to Snowflake Container Services (SPCS)](#-deployment-1-manual-deployment-to-snowflake-container-services-spcs)
+7. [Deployment 2: Automated CI/CD with GitHub Actions](#-deployment-2-automated-cicd-with-github-actions)
+8. [Monitoring & Troubleshooting](#-monitoring--troubleshooting)
 
 ---
 
-## 🏛 Arquitectura General
+## 🏛 General Architecture
 
 ```mermaid
 flowchart TD
@@ -43,60 +43,60 @@ flowchart TD
     Backend -->|snowflake-connector-python| SnowflakeDB
 ```
 
-El backend opera como un microservicio desacoplado:
-- **Cálculo Matemático & Pipeline:** Ajuste de curvas de rendimiento (*performance curves*) y optimización sujeta a restricciones de volumen total de gas o maximización global.
-- **Persistencia Híbrida:** 
-  - **SQLModel / SQLite local (`gas_lift_local.db`):** Almacena ejecuciones históricas y resultados detallados por pozo.
-  - **Snowflake Database:** Lee metadatos corporativos de pozos y pruebas históricas de producción (`BSW`, `Q_OIL`, `Q_GAS`, `WHP`).
-- **Autenticación Dual:** Detecta automáticamente si está corriendo en SPCS (usando el token OAuth montado en `/snowflake/session/token`) o en local (usando credenciales de usuario/contraseña en `.env`). Si Snowflake está inaccesible, activa modo fallback resiliente con mocks realistas.
+The backend operates as a decoupled microservice:
+- **Mathematical Computation & Optimization Pipeline:** Performance curve fitting (polynomial and non-linear) and mathematical programming constrained by total field gas lift capacity or global envelope optimization.
+- **Hybrid Persistence:**
+  - **SQLModel / Local SQLite (`gas_lift_local.db`):** Stores historical field optimization runs and detailed allocations per well.
+  - **Snowflake Database:** Reads corporate wellbore metadata and historical production test metrics (`BSW`, `Q_OIL`, `Q_GAS`, `WHP`).
+- **Dual Authentication Mode:** Automatically detects if it is running inside SPCS (using the OAuth token mounted at `/snowflake/session/token`) or in a local development environment (using username/password credentials from `.env`). If Snowflake is unreachable, it seamlessly switches to a resilient fallback with realistic mock data.
 
 ---
 
-## 📂 Estructura del Backend
+## 📂 Backend Directory Structure
 
 ```
 backend/
-├── Dockerfile                  # Imagen Docker Linux/AMD64 para SPCS
-├── requirements.txt            # Dependencias Python
-├── main.py                     # Instancia FastAPI, CORS, montaje de routers
-├── database.py                 # Conexión Snowflake inteligente + Motor SQLModel
-├── controllers/                # Capa de controladores (Endpoints HTTP)
-│   ├── data_controller.py      # Carga y parseo de archivos CSV
-│   ├── well_controller.py      # Lectura de pozos y pruebas de producción
-│   └── optimization_controller.py # Pipelines de optimización e historial
-├── entities/                   # Modelos de datos y tablas SQLModel
+├── Dockerfile                  # Linux/AMD64 Docker image for SPCS
+├── requirements.txt            # Python dependencies
+├── main.py                     # FastAPI application instance, CORS, router inclusion
+├── database.py                 # Smart Snowflake connection + SQLModel engine
+├── controllers/                # HTTP endpoint controllers
+│   ├── data_controller.py      # CSV file upload and parsing
+│   ├── well_controller.py      # Active wells and production tests retrieval
+│   └── optimization_controller.py # Constrained/global optimization pipelines & history
+├── entities/                   # Data models and SQLModel database tables
 │   ├── well.py
 │   ├── production_test.py
-│   ├── field_optimization.py   # Tabla 'field_optimizations'
-│   └── well_optimization.py    # Tabla 'well_optimizations'
-├── repositories/               # Capa de acceso a datos (Queries Snowflake & ORM)
+│   ├── field_optimization.py   # Table: 'field_optimizations'
+│   └── well_optimization.py    # Table: 'well_optimizations'
+├── repositories/               # Data access layer (Snowflake queries & ORM)
 │   ├── well_repository.py
 │   ├── production_test_repository.py
 │   ├── field_optimization_repository.py
 │   └── well_optimization_repository.py
-├── services/                   # Lógica de negocio y computación matemática
+├── services/                   # Business logic and mathematical computations
 │   ├── data_loader_service.py
-│   ├── fitting_service.py      # Ajuste polinomial y no lineal
+│   ├── fitting_service.py      # Curve fitting (oil production vs gas injection)
 │   ├── regression_service.py
 │   ├── optimization_model_service.py
 │   ├── optimization_constrained_pipeline_service.py
 │   ├── optimization_global_pipeline_service.py
 │   ├── optimization_service.py
 │   └── well_service.py
-└── tests/                      # Pruebas unitarias
+└── tests/                      # Unit and integration tests
 ```
 
 ---
 
-## ⚙️ Configuración y Variables de Entorno
+## ⚙️ Environment Configuration & Variables
 
-Crea un archivo `.env` en la raíz del proyecto para desarrollo local:
+Create a `.env` file in the project root for local development:
 
 ```ini
 # --- Snowflake Local Credentials ---
 SNOWFLAKE_ACCOUNT=zneenng-hz50319
-SNOWFLAKE_USER=tu_usuario
-SNOWFLAKE_PASSWORD=tu_contraseña
+SNOWFLAKE_USER=your_username
+SNOWFLAKE_PASSWORD=your_password
 SNOWFLAKE_ROLE=ACCOUNTADMIN
 SNOWFLAKE_WAREHOUSE=COMPUTE_WH
 
@@ -104,36 +104,36 @@ SNOWFLAKE_WAREHOUSE=COMPUTE_WH
 SNOWFLAKE_DATABASE=SANDBOX
 SNOWFLAKE_SCHEMA=GLTB
 
-# --- Production DB (Pruebas de producción) ---
+# --- Production DB (Production tests) ---
 PROD_SNOWFLAKE_DATABASE=PROD
 PROD_SNOWFLAKE_SCHEMA=ANALYTICS_D_PRODUCTION
 PROD_SNOWFLAKE_ROLE=ACCOUNTADMIN
 
-# --- Raw DB (Referencias de pozos) ---
+# --- Raw DB (Wellbore references) ---
 RAW_SNOWFLAKE_DATABASE=RAW
 RAW_SNOWFLAKE_SCHEMA=AGG__OPERATIONREFERENCE_V02
 RAW_SNOWFLAKE_ROLE=ACCOUNTADMIN
 ```
 
 > [!NOTE]
-> En **Snowflake Container Services (SPCS)**, el archivo `/snowflake/session/token` se inyecta automáticamente. El backend detecta este archivo y conmuta a autenticación OAuth interna sin requerir passwords en texto plano.
+> In **Snowflake Container Services (SPCS)**, the file `/snowflake/session/token` is injected automatically. The backend identifies this path and switches to internal OAuth authentication, eliminating the need for hardcoded credentials.
 
 ---
 
-## 📡 Documentación de la API y Controladores
+## 📡 API & Controller Documentation
 
-FastAPI genera documentación interactiva en:
+FastAPI provides automated interactive API documentation at:
 - **Swagger UI:** `http://localhost:8000/docs`
 - **ReDoc:** `http://localhost:8000/redoc`
-- **OpenAPI JSON:** `http://localhost:8000/openapi.json`
+- **OpenAPI Schema:** `http://localhost:8000/openapi.json`
 
-A continuación se detalla cada controlador:
+Detailed breakdown of controllers and endpoints:
 
 ### 1. Root / Health
 
 #### `GET /`
-Verifica el estado operativo del backend.
-- **Respuesta `200 OK`:**
+Verifies backend service operational status.
+- **Response `200 OK`:**
   ```json
   {
     "status": "online",
@@ -145,13 +145,13 @@ Verifica el estado operativo del backend.
 
 ### 2. Data Controller (`/api/data`)
 
-Maneja el procesamiento de archivos de entrada desde el servidor.
+Handles server-side parsing of production data CSV files.
 
 #### `POST /api/data/load`
-Recibe un archivo CSV con columnas de inyección y producción por pozo, realiza el parseo y retorna las matrices estructuradas.
+Receives a CSV file containing injection and fluid rate records per well, parses columns, and returns structured arrays.
 - **Content-Type:** `multipart/form-data`
-- **Body:** `file` (archivo `.csv`)
-- **Respuesta `200 OK`:**
+- **Body:** `file` (`.csv` file)
+- **Response `200 OK`:**
   ```json
   {
     "q_gl_list": [[0.0, 500.0, 1000.0], [0.0, 400.0, 800.0]],
@@ -165,12 +165,12 @@ Recibe un archivo CSV con columnas de inyección y producción por pozo, realiza
 
 ### 3. Well Controller (`/api/wells`)
 
-Interactúa con las tablas corporativas de pozos y pruebas de producción en Snowflake.
+Interacts with Snowflake production and reference tables.
 
 #### `GET /api/wells`
-Obtiene la lista de nombres de pozos activos disponibles en el sistema.
-- **Fallback:** Si la base de datos no está disponible, retorna pozos estándar por defecto.
-- **Respuesta `200 OK`:**
+Retrieves a list of active wellbore names.
+- **Fallback:** If Snowflake is offline or unreachable, returns default wellbores.
+- **Response `200 OK`:**
   ```json
   [
     "Well 1",
@@ -182,14 +182,14 @@ Obtiene la lista de nombres de pozos activos disponibles en el sistema.
   ```
 
 #### `POST /api/wells/tests/latest`
-Consulta las pruebas de producción más recientes para una lista de pozos.
-- **Body (JSON):**
+Fetches the latest production tests for a specified list of wellbores.
+- **Request Body (JSON):**
   ```json
   {
     "well_names": ["WELL-01", "WELL-02"]
   }
   ```
-- **Respuesta `200 OK`:**
+- **Response `200 OK`:**
   ```json
   [
     {
@@ -216,28 +216,28 @@ Consulta las pruebas de producción más recientes para una lista de pozos.
 
 ### 4. Optimization Controller (`/api/optimization`)
 
-Cerebro matemático del sistema. Gestiona el ajuste de curvas, la formulación de optimización con PuLP y la persistencia relacional.
+Mathematical optimization engine. Performs curve fitting, linear programming allocation with PuLP, and relational persistence.
 
 #### `POST /api/optimization/constrained`
-Ejecuta la optimización con límite estricto de gas de inyección disponible para el campo y guarda los resultados en base de datos.
-- **Body (JSON):**
+Executes optimization under an available field gas limit and automatically persists the run and well allocations to the database.
+- **Request Body (JSON):**
   ```json
   {
     "q_gl_list": [[0.0, 500.0, 1000.0, 1500.0], [0.0, 400.0, 800.0, 1200.0]],
     "q_fluid_list": [[0.0, 600.0, 1100.0, 1300.0], [0.0, 500.0, 950.0, 1150.0]],
     "wct_list": [12.0, 18.5],
-    "list_info": ["Pozo A", "Pozo B"],
+    "list_info": ["Well A", "Well B"],
     "qgl_limit": 2000.0,
     "qgl_min": 50.0,
     "p_qoil": 75.0,
     "p_qgl": 2.5
   }
   ```
-- **Proceso Interno:**
-  1. `FittingService`: Calcula curvas de ajuste aceite vs inyección de gas.
-  2. `OptimizationConstrainedPipelineService`: Resuelve el problema de programación matemática (Maximizar producción de aceite sujeta a sum(Q_gl) <= Q_gl_limit).
-  3. Guarda automáticamente la corrida en `field_optimizations` y el desglose en `well_optimizations`.
-- **Respuesta `200 OK`:**
+- **Internal Pipeline:**
+  1. `FittingService`: Fits performance curves (oil production rate vs gas injection rate).
+  2. `OptimizationConstrainedPipelineService`: Solves the mathematical allocation problem (Maximize total oil production subject to $\sum Q_{gl} \le Q_{gl}^{limit}$).
+  3. Automatically persists the run to `field_optimizations` and individual well allocations to `well_optimizations`.
+- **Response `200 OK`:**
   ```json
   {
     "optimization_results": {
@@ -251,14 +251,14 @@ Ejecuta la optimización con límite estricto de gas de inyección disponible pa
       {
         "optimization_id": 14,
         "well_number": 0,
-        "well_name": "Pozo A",
+        "well_name": "Well A",
         "optimal_production": 1180.20,
         "optimal_gas_injection": 1050.00
       },
       {
         "optimization_id": 14,
         "well_number": 1,
-        "well_name": "Pozo B",
+        "well_name": "Well B",
         "optimal_production": 970.25,
         "optimal_gas_injection": 930.00
       }
@@ -267,14 +267,14 @@ Ejecuta la optimización con límite estricto de gas de inyección disponible pa
   ```
 
 #### `POST /api/optimization/global`
-Ejecuta una simulación iterativa de asignación global variando el gas disponible para construir la curva envolvente de potencial del campo (no persiste en base de datos).
-- **Body (JSON):**
+Executes an iterative global simulation across a wide range of gas lift injection capacities to identify field maximum potential and economic inflection points (not persisted to DB).
+- **Request Body (JSON):**
   ```json
   {
     "q_gl_list": [[0.0, 500.0, 1000.0], [0.0, 400.0, 800.0]],
     "q_fluid_list": [[0.0, 600.0, 1100.0], [0.0, 500.0, 950.0]],
     "wct_list": [10.0, 15.0],
-    "list_info": ["Pozo 1", "Pozo 2"],
+    "list_info": ["Well 1", "Well 2"],
     "qgl_min": 0.0,
     "p_qoil": 70.0,
     "p_qgl": 3.0,
@@ -282,12 +282,12 @@ Ejecuta una simulación iterativa de asignación global variando el gas disponib
     "max_qgl": 50000
   }
   ```
-- **Respuesta `200 OK`:** Retorna matrices de inyección escalonada, producción incremental y punto de inflexión económico.
+- **Response `200 OK`:** Returns stepped injection arrays, incremental oil production, and economic optimum thresholds.
 
 #### `GET /api/optimization/history`
-Recupera las últimas optimizaciones registradas en la base de datos.
-- **Query Params:** `limit` (int, default: 10)
-- **Respuesta `200 OK`:**
+Retrieves historical field optimization runs.
+- **Query Parameters:** `limit` (int, default: 10)
+- **Response `200 OK`:**
   ```json
   [
     {
@@ -298,53 +298,52 @@ Recupera las últimas optimizaciones registradas en la base de datos.
       "gas_injection_limit": 2000.00,
       "oil_price": 75.0,
       "gas_price": 2.5,
-      "field_name": "Campo Principal"
+      "field_name": "Main Field"
     }
   ]
   ```
 
 #### `GET /api/optimization/history/{opt_id}`
-Detalle de una optimización general específica por su ID.
+Returns details of a specific field optimization run by its primary key ID.
 
 #### `GET /api/optimization/history/{opt_id}/wells`
-Lista de asignaciones por pozo asociadas a la optimización `opt_id`.
+Returns individual well allocations associated with optimization run `opt_id`.
 
 ---
 
-## 💻 Ejecución en Entorno Local
+## 💻 Local Development Setup
 
-### 1. Prerrequisitos
-- Python 3.10 o 3.11
-- pip o Conda
+### 1. Prerequisites
+- Python 3.10 or 3.11
+- pip or Conda
 
-### 2. Instalación de dependencias
+### 2. Environment & Dependencies Installation
 ```bash
-# Crear entorno virtual
+# Create and activate virtual environment
 python -m venv venv
-source venv/bin/activate   # En Windows: venv\Scripts\activate
+source venv/bin/activate   # On Windows: venv\Scripts\activate
 
-# Instalar dependencias del backend
+# Install backend dependencies
 pip install -r backend/requirements.txt
 ```
 
-### 3. Iniciar el servidor FastAPI
-Desde la raíz del repositorio:
+### 3. Start the FastAPI Server
+Run from the root directory of the project:
 ```bash
-# Windows / Linux / macOS
 uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-El servidor iniciará en `http://localhost:8000`. Al arrancar, creará automáticamente el archivo SQLite `gas_lift_local.db` en la raíz si no existe.
+The server will listen at `http://localhost:8000`. Upon startup, it creates the local SQLite database file `gas_lift_local.db` in the repository root if it does not already exist.
 
 ---
 
-## 🚀 Despliegue 1: Manual en Snowflake Container Services (SPCS)
+## 🚀 Deployment 1: Manual Deployment to Snowflake Container Services (SPCS)
 
-Snowflake Container Services ejecuta contenedores OCI dentro del perímetro de seguridad de Snowflake.
+Snowflake Container Services executes OCI container images within Snowflake's managed security boundary.
 
-### Paso 1: Configurar Objetos en Snowflake (SQL)
+### Step 1: Provision Snowflake Infrastructure (SQL)
 
-Ejecuta el siguiente script en tu consola de Snowflake con un rol con permisos suficientes (e.g., `ACCOUNTADMIN` o rol DevOps):
+Run the following DDL in your Snowflake worksheet with an administrative role (e.g., `ACCOUNTADMIN`):
 
 ```sql
 USE ROLE ACCOUNTADMIN;
@@ -352,7 +351,7 @@ CREATE DATABASE IF NOT EXISTS PROD;
 CREATE SCHEMA IF NOT EXISTS PROD.PUBLIC;
 USE SCHEMA PROD.PUBLIC;
 
--- 1. Crear el Compute Pool
+-- 1. Create the Compute Pool
 CREATE COMPUTE_POOL IF NOT EXISTS GAS_LIFT_COMPUTE_POOL
   MIN_NODES = 1
   MAX_NODES = 1
@@ -360,48 +359,48 @@ CREATE COMPUTE_POOL IF NOT EXISTS GAS_LIFT_COMPUTE_POOL
   AUTO_RESUME = TRUE
   AUTO_SUSPEND_SECS = 3600;
 
--- 2. Crear el Repositorio de Imágenes Docker
+-- 2. Create the Image Repository
 CREATE IMAGE REPOSITORY IF NOT EXISTS PROD.PUBLIC.GAS_LIFT_IMAGES;
 
--- Obtener la URL del registro:
+-- Obtain the repository registry URL:
 SHOW IMAGE REPOSITORIES IN SCHEMA PROD.PUBLIC;
--- Ejemplo de URL obtenida: zneenng-hz50319.registry.snowflakecomputing.com/prod/public/gas_lift_images
+-- Example Registry URL: zneenng-hz50319.registry.snowflakecomputing.com/prod/public/gas_lift_images
 
--- 3. Crear el Stage para almacenar el archivo YAML de especificación
+-- 3. Create the Stage for specification YAML files
 CREATE STAGE IF NOT EXISTS PROD.PUBLIC.SPCS_SPECS
   ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE');
 ```
 
 ---
 
-### Paso 2: Autenticación en el Registro de Snowflake
+### Step 2: Authenticate with Snowflake Container Registry
 
-Inicia sesión en el registro OCI de Snowflake desde tu terminal:
+Authenticate your local Docker CLI against Snowflake:
 
 ```bash
-docker login zneenng-hz50319.registry.snowflakecomputing.com -u <TU_USUARIO_SNOWFLAKE>
+docker login zneenng-hz50319.registry.snowflakecomputing.com -u <YOUR_SNOWFLAKE_USERNAME>
 ```
-*(Introduce tu contraseña cuando te sea solicitada)*.
+*(Enter your Snowflake password when prompted)*.
 
 ---
 
-### Paso 3: Construcción y Etiquetado de Imágenes (Multiplataforma)
+### Step 3: Multi-Platform Docker Build
 
 > [!IMPORTANT]
-> Los nodos de SPCS requieren arquitectura **`linux/amd64`**. Si compilas desde una Mac con Apple Silicon (M1/M2/M3) o Windows ARM, **debes** usar el flag `--platform linux/amd64`.
+> SPCS nodes require the **`linux/amd64`** architecture. When building on Apple Silicon (M1/M2/M3) or Windows ARM machines, you **must** supply `--platform linux/amd64`.
 
-Ejecuta desde la raíz del proyecto:
+Execute from the root directory of the project:
 
 ```bash
-# 1. Definir variables de registro
+# 1. Set registry environment variable
 REGISTRY="zneenng-hz50319.registry.snowflakecomputing.com/prod/public/gas_lift_images"
 
-# 2. Compilar imagen de Backend
+# 2. Build Backend image
 docker build --platform linux/amd64 \
   -t $REGISTRY/gas_lift_backend:latest \
   -f backend/Dockerfile .
 
-# 3. Compilar imagen de Frontend
+# 3. Build Frontend image
 docker build --platform linux/amd64 \
   -t $REGISTRY/gas_lift_frontend:latest \
   -f frontend/Dockerfile .
@@ -409,7 +408,7 @@ docker build --platform linux/amd64 \
 
 ---
 
-### Paso 4: Subir Imágenes al Repositorio
+### Step 4: Push Docker Images to Snowflake
 
 ```bash
 docker push $REGISTRY/gas_lift_backend:latest
@@ -418,32 +417,31 @@ docker push $REGISTRY/gas_lift_frontend:latest
 
 ---
 
-### Paso 5: Cargar el Archivo de Especificación (`spcs_service.yaml`)
+### Step 5: Upload Specification File (`spcs_service.yaml`)
 
-Sube el archivo de especificación al Stage de Snowflake mediante SnowSQL, SnowCLI o Python:
+Upload the specification file to the Snowflake stage using SnowSQL, Snowflake CLI, or Python:
 
 ```bash
-# Con SnowSQL o Snowflake CLI:
-snowsql -a zneenng-hz50319 -u <TU_USUARIO> -q "PUT file://spcs_service.yaml @PROD.PUBLIC.SPCS_SPECS AUTO_COMPRESS=FALSE OVERWRITE=TRUE;"
+snowsql -a zneenng-hz50319 -u <YOUR_SNOWFLAKE_USERNAME> -q "PUT file://spcs_service.yaml @PROD.PUBLIC.SPCS_SPECS AUTO_COMPRESS=FALSE OVERWRITE=TRUE;"
 ```
 
 ---
 
-### Paso 6: Crear o Actualizar el Servicio en Snowflake
+### Step 6: Create or Update the Service in Snowflake
 
-Ejecuta en Snowflake SQL:
+Run in Snowflake SQL:
 
 ```sql
 USE ROLE ACCOUNTADMIN;
 USE SCHEMA PROD.PUBLIC;
 
--- Si es la primera vez que creas el servicio:
+-- First-time service creation:
 CREATE SERVICE PROD.PUBLIC.GAS_LIFT_SERVICE
   IN COMPUTE_POOL GAS_LIFT_COMPUTE_POOL
   FROM @PROD.PUBLIC.SPCS_SPECS
   SPECIFICATION_FILE = 'spcs_service.yaml';
 
--- Si el servicio ya existía y solo actualizaste la imagen o spec:
+-- Updating an existing service with new images or specifications:
 ALTER SERVICE PROD.PUBLIC.GAS_LIFT_SERVICE 
   FROM @PROD.PUBLIC.SPCS_SPECS 
   SPECIFICATION_FILE = 'spcs_service.yaml';
@@ -451,39 +449,39 @@ ALTER SERVICE PROD.PUBLIC.GAS_LIFT_SERVICE
 
 ---
 
-### Paso 7: Obtener la URL Pública del Servicio
+### Step 7: Retrieve Public Endpoint URLs
 
-Para consultar la URL asignada a la interfaz web y la API:
+Query the service endpoints to obtain public HTTPS URLs:
 
 ```sql
 SHOW ENDPOINTS IN SERVICE PROD.PUBLIC.GAS_LIFT_SERVICE;
 ```
 
-Copia la URL del endpoint `ui` (puerto 8501) para acceder a Streamlit y `backend-api` (puerto 8000) para acceder a FastAPI.
+Copy the URL of the `ui` endpoint (port 8501) for Streamlit and `backend-api` (port 8000) for FastAPI.
 
 ---
 
-## 🔄 Despliegue 2: CI/CD Automatizado con GitHub Actions
+## 🔄 Deployment 2: Automated CI/CD with GitHub Actions
 
-Automatiza la compilación, subida de imágenes y despliegue del servicio cada vez que se realice un `push` a la rama `main`.
+Automate container build, multi-platform compilation, image push, and service update whenever code is pushed to the `main` branch.
 
-### Paso 1: Configurar Secretos en GitHub
-Ve a tu repositorio en GitHub > **Settings** > **Secrets and variables** > **Actions** y crea los siguientes secretos:
+### Step 1: Configure Repository Secrets
+Navigate to your GitHub repository > **Settings** > **Secrets and variables** > **Actions** and register the following secrets:
 
-| Nombre del Secreto | Descripción / Ejemplo |
+| Secret Name | Description / Example |
 |---|---|
-| `SNOWFLAKE_ACCOUNT` | Identificador de cuenta (ej. `zneenng-hz50319`) |
-| `SNOWFLAKE_USER` | Usuario técnico o de despliegue |
-| `SNOWFLAKE_PASSWORD` | Contraseña del usuario |
-| `SNOWFLAKE_ROLE` | Rol de ejecución (ej. `ACCOUNTADMIN`) |
-| `SNOWFLAKE_WAREHOUSE` | Warehouse asignado (ej. `COMPUTE_WH`) |
-| `SNOWFLAKE_REGISTRY_HOST` | Host del registro (ej. `zneenng-hz50319.registry.snowflakecomputing.com`) |
+| `SNOWFLAKE_ACCOUNT` | Snowflake account locator (e.g., `zneenng-hz50319`) |
+| `SNOWFLAKE_USER` | Deployment/service user |
+| `SNOWFLAKE_PASSWORD` | Service user password |
+| `SNOWFLAKE_ROLE` | Execution role (e.g., `ACCOUNTADMIN`) |
+| `SNOWFLAKE_WAREHOUSE` | Virtual warehouse (e.g., `COMPUTE_WH`) |
+| `SNOWFLAKE_REGISTRY_HOST` | Registry host (e.g., `zneenng-hz50319.registry.snowflakecomputing.com`) |
 
 ---
 
-### Paso 2: Archivo de Workflow de GitHub Actions
+### Step 2: GitHub Actions Workflow File
 
-El repositorio incluye el pipeline listo en [`.github/workflows/deploy_spcs.yml`](file:///.github/workflows/deploy_spcs.yml):
+The workflow is ready in [`.github/workflows/deploy_spcs.yml`](file:///.github/workflows/deploy_spcs.yml):
 
 ```yaml
 name: Deploy Gas Lift to Snowflake Container Services
@@ -565,14 +563,14 @@ jobs:
           )
           cur = conn.cursor()
 
-          # 1. Asegurar stage
+          # 1. Ensure stage exists
           cur.execute("CREATE STAGE IF NOT EXISTS PROD.PUBLIC.SPCS_SPECS ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE');")
 
-          # 2. Subir spcs_service.yaml al stage
+          # 2. Upload spcs_service.yaml to stage
           print("Uploading spcs_service.yaml to Snowflake stage...")
           cur.execute("PUT file://spcs_service.yaml @PROD.PUBLIC.SPCS_SPECS AUTO_COMPRESS=FALSE OVERWRITE=TRUE;")
 
-          # 3. Crear o actualizar el servicio
+          # 3. Create or update service
           print("Checking service existence...")
           cur.execute("SHOW SERVICES LIKE 'GAS_LIFT_SERVICE' IN SCHEMA PROD.PUBLIC;")
           exists = len(cur.fetchall()) > 0
@@ -595,29 +593,29 @@ jobs:
 
 ---
 
-## 🔍 Monitoreo y Solución de Problemas (Troubleshooting)
+## 🔍 Monitoring & Troubleshooting
 
-### 1. Comandos de Diagnóstico en Snowflake
+### 1. Diagnostic SQL Commands in Snowflake
 
 ```sql
--- Consultar el estado de los contenedores
+-- Check service container statuses
 CALL SYSTEM$GET_SERVICE_STATUS('PROD.PUBLIC.GAS_LIFT_SERVICE');
 
--- Ver logs en tiempo real del backend
+-- Inspect real-time logs of the backend container
 CALL SYSTEM$GET_SERVICE_LOGS('PROD.PUBLIC.GAS_LIFT_SERVICE', '0', 'backend', 200);
 
--- Ver logs del frontend
+-- Inspect real-time logs of the frontend container
 CALL SYSTEM$GET_SERVICE_LOGS('PROD.PUBLIC.GAS_LIFT_SERVICE', '0', 'frontend', 200);
 
--- Reiniciar el servicio si se requiere refrescar el estado
+-- Restart service if containers require state refresh
 ALTER SERVICE PROD.PUBLIC.GAS_LIFT_SERVICE RESTART;
 ```
 
-### 2. Errores Comunes y Solución
+### 2. Common Issues and Resolutions
 
-| Síntoma / Error | Causa | Solución |
+| Symptom / Error | Root Cause | Solution |
 |---|---|---|
-| `exec /bin/sh: exec format error` | La imagen fue construida para arquitectura ARM (Apple M1/M2) y no `linux/amd64`. | Asegúrate de usar `--platform linux/amd64` al ejecutar `docker build` o en GitHub Actions con `docker/setup-qemu-action`. |
-| `Cannot connect to host localhost:8000` | El frontend intenta conectar antes de que FastAPI finalice su startup. | En `spcs_service.yaml` ambos contenedores conviven en el mismo pod; verifica con `GET_SERVICE_LOGS` que el backend haya inicializado Uvicorn en el puerto 8000. |
-| `Authentication failed for user` | Variables de entorno de Snowflake incorrectas. | En SPCS el token OAuth se carga desde `/snowflake/session/token`. Revisa que el rol tenga privilegios en la base de datos `SANDBOX` y `PROD`. |
-| `COMPUTE_POOL state: SUSPENDED` | El compute pool suspendió sus nodos por inactividad. | Al llamar al endpoint público se reactivará automáticamente si `AUTO_RESUME = TRUE`, o ejecútalo manualmente con `ALTER COMPUTE_POOL GAS_LIFT_COMPUTE_POOL RESUME;`. |
+| `exec /bin/sh: exec format error` | Image was built for ARM (Apple Silicon) rather than `linux/amd64`. | Pass `--platform linux/amd64` during `docker build` or use `docker/setup-qemu-action` in GitHub Actions. |
+| `Cannot connect to host localhost:8000` | Frontend requests backend before Uvicorn has completed its startup routine. | Check `SYSTEM$GET_SERVICE_LOGS` for the backend container to ensure Uvicorn is bound to port 8000. In `spcs_service.yaml`, both containers run in the same pod. |
+| `Authentication failed for user` | Missing or invalid credentials in local environment. | Inside SPCS, the OAuth token is automatically loaded from `/snowflake/session/token`. Locally, verify your `.env` variables. |
+| `COMPUTE_POOL state: SUSPENDED` | The compute pool paused due to inactivity timeout. | If `AUTO_RESUME = TRUE`, sending traffic to the public endpoint resumes nodes automatically. Alternatively, run: `ALTER COMPUTE_POOL GAS_LIFT_COMPUTE_POOL RESUME;`. |
